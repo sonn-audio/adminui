@@ -2306,6 +2306,12 @@ function ZoneEqualizerSection({ zone, saving, onChange }: ZoneEqualizerSectionPr
   );
 }
 
+/**
+ * The sound quality a DLNA renderer is fed. `auto` lets the server ask the renderer what it
+ * accepts, which is right until a device claims a format it cannot really play.
+ */
+type DlnaStreamFormat = 'auto' | 'mp3' | 'lossless';
+
 function ZoneOutputEditor({
   zone,
   saving,
@@ -2471,6 +2477,14 @@ function ZoneOutputEditor({
   const isSonos = selectedDefinition?.id === 'sonos';
   const isDlna = selectedDefinition?.id === 'dlna';
   const isMusicAssistant = selectedDefinition?.id === 'musicassistant';
+  // What the server accepts is wider than what we offer (`flac`/`lossy` are aliases), so read
+  // loosely and write one canonical value back.
+  const dlnaStreamFormat: DlnaStreamFormat = ((): DlnaStreamFormat => {
+    const raw = (fieldValues.streamFormat ?? '').trim().toLowerCase();
+    if (raw === 'mp3' || raw === 'lossy') return 'mp3';
+    if (raw === 'lossless' || raw === 'flac') return 'lossless';
+    return 'auto';
+  })();
   React.useEffect(() => {
     if (!isAirplay) {
       setAirplayDevices(null);
@@ -2996,7 +3010,41 @@ function ZoneOutputEditor({
       payload.controlUrl = device.controlUrl;
       values.controlUrl = device.controlUrl;
     }
+    // A picked sound quality survives a device change — this list is not a reset button, and a
+    // renderer that needed MP3 to play at all would silently go back to guessing.
+    const keptFormat =
+      primary?.id === 'dlna' && typeof primary.streamFormat === 'string'
+        ? primary.streamFormat
+        : fieldValues.streamFormat;
+    if (keptFormat && keptFormat.trim()) {
+      payload.streamFormat = keptFormat.trim();
+      values.streamFormat = keptFormat.trim();
+    }
     setFieldValues(values);
+    onChange(payload);
+  }
+
+  /**
+   * Write the sound quality without disturbing the device the picker chose. `auto` stores nothing
+   * at all: the absence of a value is what the server reads as "ask the renderer".
+   */
+  function applyDlnaStreamFormat(next: DlnaStreamFormat): void {
+    setFieldValues((prev) => {
+      const values = { ...prev };
+      if (next === 'auto') {
+        delete values.streamFormat;
+      } else {
+        values.streamFormat = next;
+      }
+      return values;
+    });
+    const base = primary?.id === 'dlna' ? primary : {};
+    const payload: ZoneTransportConfig = { ...base, id: 'dlna' };
+    if (next === 'auto') {
+      delete payload.streamFormat;
+    } else {
+      payload.streamFormat = next;
+    }
     onChange(payload);
   }
 
@@ -3477,6 +3525,26 @@ function ZoneOutputEditor({
           </div>
           {definitions.length === 0 && (
             <p className="zone-detail-text muted">{t('zones.output.noTransports')}</p>
+          )}
+          {isDlna && (
+            <div className="zone-output-fields">
+              <div className="zone-output-field">
+                <span>{t('zones.output.dlnaQuality')}</span>
+                <SelectMenu
+                  className="zone-output-select"
+                  label={t('zones.output.dlnaQuality')}
+                  value={dlnaStreamFormat}
+                  disabled={saving}
+                  options={[
+                    { value: 'auto', label: t('zones.output.dlnaQualityAuto') },
+                    { value: 'mp3', label: t('zones.output.dlnaQualityMp3') },
+                    { value: 'lossless', label: t('zones.output.dlnaQualityLossless') },
+                  ]}
+                  onChange={applyDlnaStreamFormat}
+                />
+                <p className="zone-output-help">{t('zones.output.dlnaQualityDesc')}</p>
+              </div>
+            </div>
           )}
           {selectedDefinition &&
             !isAirplay &&
