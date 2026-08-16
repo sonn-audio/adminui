@@ -901,7 +901,8 @@
 /* ---- TTS provider picker ---- */
 .setup-tts-providers {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* Sized by how many providers there are, not by how many there were. */
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
   gap: 10px;
   padding: 4px 18px 14px;
 }

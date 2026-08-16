@@ -1,4 +1,5 @@
 import { API_BASE } from '../config/apiConfig';
+import type { TtsConfig } from '../types/config';
 import { requestJson, requestOk } from './http';
 
 export type ContentUpdatePayload = {
@@ -15,21 +16,7 @@ export type ContentUpdatePayload = {
     enabled?: boolean;
     autoScan?: boolean;
   };
-  tts?: {
-    provider?:
-      | { type: 'internal' }
-      | {
-          type: 'loxberry-tts';
-          enabled?: boolean;
-          host?: string;
-          mqttPort?: number;
-          protocol?: 'mqtt' | 'mqtts';
-          username?: string;
-          password?: string;
-          httpBaseUrl?: string;
-        };
-    fallbackToInternal?: boolean;
-  };
+  tts?: TtsConfig;
   /** DLNA/UPnP MediaServer that exposes browsable content to other devices. */
   mediaServer?: {
     enabled?: boolean;

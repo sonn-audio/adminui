@@ -26,7 +26,7 @@ import { SubPanel, useSubPanelTransition } from '../components/SubPanel';
 import { useConfirm } from '../components/ConfirmDialog';
 import { useServerControl } from '../components/ServerControl';
 import InlineState from '../components/InlineState';
-import type { RootConfig } from '../types/config';
+import type { OpenAiTtsFormat, RootConfig } from '../types/config';
 import { copyText } from '../utils/clipboard';
 import { formatDuration, formatTimestamp } from '../utils/format';
 import AlertsManager from './alerts/AlertsManager';
@@ -38,15 +38,43 @@ type SetupConfig = {
 // 'loxone' only exists when the server runs in Loxone mode — see loxoneMode below.
 type SetupTabKey = 'config' | 'loxone' | 'system' | 'devices' | 'updates';
 
-type TtsDraft = {
-  type: 'internal' | 'loxberry-tts';
+type TtsProviderKind = 'internal' | 'loxberry-tts' | 'openai-tts';
+
+// Each provider keeps its own fields, so switching cards to compare them does
+// not throw away what was already typed into the other one.
+type LoxBerryTtsDraft = {
   host: string;
   mqttPort: string;
   protocol: 'mqtt' | 'mqtts';
   username: string;
   password: string;
+};
+
+type OpenAiTtsDraft = {
+  baseUrl: string;
+  apiKey: string;
+  model: string;
+  voice: string;
+  format: OpenAiTtsFormat;
+};
+
+type TtsDraft = {
+  type: TtsProviderKind;
+  loxberry: LoxBerryTtsDraft;
+  openai: OpenAiTtsDraft;
   fallbackToInternal: boolean;
 };
+
+const OPENAI_TTS_FORMATS: OpenAiTtsFormat[] = ['mp3', 'opus', 'aac', 'flac', 'wav'];
+
+function isHttpUrl(value: string): boolean {
+  try {
+    const parsed = new URL(value.trim());
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
+  }
+}
 
 // Small "i" used by the inline explainer notes.
 function InfoGlyph(): JSX.Element {
@@ -72,26 +100,31 @@ async function fileToBase64(file: File): Promise<string> {
 function buildTtsDraft(config: RootConfig | undefined): TtsDraft {
   const tts = config?.content?.tts;
   const provider = tts?.provider;
+  const draft: TtsDraft = {
+    type: provider?.type === 'loxberry-tts' || provider?.type === 'openai-tts' ? provider.type : 'internal',
+    loxberry: { host: '', mqttPort: '1883', protocol: 'mqtt', username: '', password: '' },
+    openai: { baseUrl: '', apiKey: '', model: '', voice: '', format: 'mp3' },
+    fallbackToInternal: tts?.fallbackToInternal !== false,
+  };
   if (provider?.type === 'loxberry-tts') {
-    return {
-      type: 'loxberry-tts',
+    draft.loxberry = {
       host: provider.host ?? '',
       mqttPort: provider.mqttPort ? String(provider.mqttPort) : '1883',
       protocol: provider.protocol === 'mqtts' ? 'mqtts' : 'mqtt',
       username: provider.username ?? '',
       password: provider.password ?? '',
-      fallbackToInternal: tts?.fallbackToInternal !== false,
     };
   }
-  return {
-    type: 'internal',
-    host: '',
-    mqttPort: '1883',
-    protocol: 'mqtt',
-    username: '',
-    password: '',
-    fallbackToInternal: true,
-  };
+  if (provider?.type === 'openai-tts') {
+    draft.openai = {
+      baseUrl: provider.baseUrl ?? '',
+      apiKey: provider.apiKey ?? '',
+      model: provider.model ?? '',
+      voice: provider.voice ?? '',
+      format: provider.format ?? 'mp3',
+    };
+  }
+  return draft;
 }
 
 export default function SetupView(): JSX.Element {
@@ -385,15 +418,25 @@ export default function SetupView(): JSX.Element {
   const updatesCheckedLabel = updatesCheckedAt ? formatTimestamp(updatesCheckedAt) ?? updatesCheckedAt : t('setup.updates.notCheckedYet');
   const updatesSummaryTone = !updatesCheckedAt ? 'neutral' : hasUpdates ? 'warn' : 'ok';
   const updatesSummaryLabel = !updatesCheckedAt ? t('setup.updates.notChecked') : hasUpdates ? t('setup.updates.available') : t('setup.updates.upToDate');
-  const ttsMqttPort = Number(ttsDraft.mqttPort);
-  const ttsLoxBerryValid =
-    ttsDraft.type === 'internal' ||
-    (ttsDraft.host.trim().length > 0 &&
-      Number.isInteger(ttsMqttPort) &&
-      ttsMqttPort > 0 &&
-      ttsMqttPort <= 65535);
-  const ttsCurrentProvider = contentConfig.tts?.provider?.type === 'loxberry-tts' ? t('setup.tts.currentLoxBerry') : t('setup.tts.currentInternal');
-  const showTtsValidation = ttsDirty && !ttsLoxBerryValid;
+  const ttsMqttPort = Number(ttsDraft.loxberry.mqttPort);
+  const ttsProviderValid =
+    ttsDraft.type === 'internal'
+      ? true
+      : ttsDraft.type === 'loxberry-tts'
+        ? ttsDraft.loxberry.host.trim().length > 0 &&
+          Number.isInteger(ttsMqttPort) &&
+          ttsMqttPort > 0 &&
+          ttsMqttPort <= 65535
+        : isHttpUrl(ttsDraft.openai.baseUrl);
+  const ttsCurrentProvider =
+    contentConfig.tts?.provider?.type === 'loxberry-tts'
+      ? t('setup.tts.currentLoxBerry')
+      : contentConfig.tts?.provider?.type === 'openai-tts'
+        ? t('setup.tts.currentOpenAi')
+        : t('setup.tts.currentInternal');
+  const showTtsValidation = ttsDirty && !ttsProviderValid;
+  const ttsValidationMessage =
+    ttsDraft.type === 'openai-tts' ? t('setup.tts.validationOpenAi') : t('setup.tts.validation');
 
   const componentRows = componentPackageNames(status, latest).map((name) => {
     const latestVer = componentLatest[name] ?? null;
@@ -707,7 +750,7 @@ export default function SetupView(): JSX.Element {
 
   async function handleTtsSave(event: React.FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (ttsSaving || !ttsLoxBerryValid) {
+    if (ttsSaving || !ttsProviderValid) {
       return;
     }
     setTtsSaving(true);
@@ -720,15 +763,26 @@ export default function SetupView(): JSX.Element {
                 fallbackToInternal: true,
               }
             : {
-                provider: {
-                  type: 'loxberry-tts',
-                  enabled: true,
-                  host: ttsDraft.host.trim(),
-                  mqttPort: ttsMqttPort,
-                  protocol: ttsDraft.protocol,
-                  username: ttsDraft.username.trim() || undefined,
-                  password: ttsDraft.password || undefined,
-                },
+                provider:
+                  ttsDraft.type === 'loxberry-tts'
+                    ? {
+                        type: 'loxberry-tts',
+                        enabled: true,
+                        host: ttsDraft.loxberry.host.trim(),
+                        mqttPort: ttsMqttPort,
+                        protocol: ttsDraft.loxberry.protocol,
+                        username: ttsDraft.loxberry.username.trim() || undefined,
+                        password: ttsDraft.loxberry.password || undefined,
+                      }
+                    : {
+                        type: 'openai-tts',
+                        enabled: true,
+                        baseUrl: ttsDraft.openai.baseUrl.trim(),
+                        apiKey: ttsDraft.openai.apiKey.trim() || undefined,
+                        model: ttsDraft.openai.model.trim() || undefined,
+                        voice: ttsDraft.openai.voice.trim() || undefined,
+                        format: ttsDraft.openai.format,
+                      },
                 fallbackToInternal: ttsDraft.fallbackToInternal,
               },
       });
@@ -1352,7 +1406,130 @@ export default function SetupView(): JSX.Element {
                   <span className="setup-tts-provider__name">{t('setup.tts.providerLoxBerry')}</span>
                   <span className="setup-tts-provider__desc">{t('setup.tts.providerLoxBerryDesc')}</span>
                 </button>
+                <button
+                  type="button"
+                  className={`setup-tts-provider${ttsDraft.type === 'openai-tts' ? ' is-selected' : ''}`}
+                  onClick={() => {
+                    setTtsDraft((prev) => ({ ...prev, type: 'openai-tts' }));
+                    setTtsDirty(true);
+                  }}
+                >
+                  <span className="setup-tts-provider__name">{t('setup.tts.providerOpenAi')}</span>
+                  <span className="setup-tts-provider__desc">{t('setup.tts.providerOpenAiDesc')}</span>
+                </button>
               </div>
+
+              {ttsDraft.type === 'openai-tts' ? (
+                <div className="setup-rows">
+                  <div className="setup-row">
+                    <div className="setup-row__info">
+                      <div className="setup-row__label">{t('setup.tts.openaiBaseUrl')}</div>
+                      <div className="setup-row__desc">{t('setup.tts.openaiBaseUrlDesc')}</div>
+                    </div>
+                    <div className="setup-row__control">
+                      <div className="setup-input" style={{ minWidth: 280 }}>
+                        <input
+                          type="text"
+                          value={ttsDraft.openai.baseUrl}
+                          placeholder="http://localhost:8880/v1"
+                          onChange={(event) => {
+                            const baseUrl = event.target.value;
+                            setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, baseUrl } }));
+                            setTtsDirty(true);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="setup-row">
+                    <div className="setup-row__info">
+                      <div className="setup-row__label">{t('setup.tts.openaiApiKey')}</div>
+                      <div className="setup-row__desc">{t('setup.tts.openaiApiKeyDesc')}</div>
+                    </div>
+                    <div className="setup-row__control">
+                      <div className="setup-input" style={{ minWidth: 220 }}>
+                        <input
+                          type="password"
+                          value={ttsDraft.openai.apiKey}
+                          onChange={(event) => {
+                            const apiKey = event.target.value;
+                            setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, apiKey } }));
+                            setTtsDirty(true);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="setup-row">
+                    <div className="setup-row__info">
+                      <div className="setup-row__label">{t('setup.tts.openaiModel')}</div>
+                      <div className="setup-row__desc">{t('setup.tts.openaiModelDesc')}</div>
+                    </div>
+                    <div className="setup-row__control">
+                      <div className="setup-input" style={{ minWidth: 200 }}>
+                        <input
+                          type="text"
+                          value={ttsDraft.openai.model}
+                          placeholder="tts-1"
+                          onChange={(event) => {
+                            const model = event.target.value;
+                            setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, model } }));
+                            setTtsDirty(true);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="setup-row">
+                    <div className="setup-row__info">
+                      <div className="setup-row__label">{t('setup.tts.openaiVoice')}</div>
+                      <div className="setup-row__desc">{t('setup.tts.openaiVoiceDesc')}</div>
+                    </div>
+                    <div className="setup-row__control">
+                      <div className="setup-input" style={{ minWidth: 200 }}>
+                        <input
+                          type="text"
+                          value={ttsDraft.openai.voice}
+                          placeholder="alloy"
+                          onChange={(event) => {
+                            const voice = event.target.value;
+                            setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, voice } }));
+                            setTtsDirty(true);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="setup-row">
+                    <div className="setup-row__info">
+                      <div className="setup-row__label">{t('setup.tts.openaiFormat')}</div>
+                      <div className="setup-row__desc">{t('setup.tts.openaiFormatDesc')}</div>
+                    </div>
+                    <div className="setup-row__control">
+                      <div className="setup-input" style={{ width: 140 }}>
+                        <select
+                          value={ttsDraft.openai.format}
+                          onChange={(event) => {
+                            const format = event.target.value as OpenAiTtsFormat;
+                            setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, format } }));
+                            setTtsDirty(true);
+                          }}
+                        >
+                          {OPENAI_TTS_FORMATS.map((format) => (
+                            <option key={format} value={format}>
+                              {format}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ) : null}
 
               {ttsDraft.type === 'loxberry-tts' ? (
                 <div className="setup-rows">
@@ -1365,10 +1542,10 @@ export default function SetupView(): JSX.Element {
                       <div className="setup-input" style={{ minWidth: 220 }}>
                         <input
                           type="text"
-                          value={ttsDraft.host}
+                          value={ttsDraft.loxberry.host}
                           placeholder="loxberry.local"
                           onChange={(event) => {
-                            setTtsDraft((prev) => ({ ...prev, host: event.target.value }));
+                            setTtsDraft((prev) => ({ ...prev, loxberry: { ...prev.loxberry, host: event.target.value } }));
                             setTtsDirty(true);
                           }}
                         />
@@ -1385,9 +1562,9 @@ export default function SetupView(): JSX.Element {
                       <div className="setup-input" style={{ width: 140 }}>
                         <input
                           type="number"
-                          value={ttsDraft.mqttPort}
+                          value={ttsDraft.loxberry.mqttPort}
                           onChange={(event) => {
-                            setTtsDraft((prev) => ({ ...prev, mqttPort: event.target.value }));
+                            setTtsDraft((prev) => ({ ...prev, loxberry: { ...prev.loxberry, mqttPort: event.target.value } }));
                             setTtsDirty(true);
                           }}
                         />
@@ -1403,9 +1580,9 @@ export default function SetupView(): JSX.Element {
                       <div className="setup-input" style={{ minWidth: 200 }}>
                         <input
                           type="text"
-                          value={ttsDraft.username}
+                          value={ttsDraft.loxberry.username}
                           onChange={(event) => {
-                            setTtsDraft((prev) => ({ ...prev, username: event.target.value }));
+                            setTtsDraft((prev) => ({ ...prev, loxberry: { ...prev.loxberry, username: event.target.value } }));
                             setTtsDirty(true);
                           }}
                         />
@@ -1421,9 +1598,9 @@ export default function SetupView(): JSX.Element {
                       <div className="setup-input" style={{ minWidth: 200 }}>
                         <input
                           type="password"
-                          value={ttsDraft.password}
+                          value={ttsDraft.loxberry.password}
                           onChange={(event) => {
-                            setTtsDraft((prev) => ({ ...prev, password: event.target.value }));
+                            setTtsDraft((prev) => ({ ...prev, loxberry: { ...prev.loxberry, password: event.target.value } }));
                             setTtsDirty(true);
                           }}
                         />
@@ -1437,7 +1614,7 @@ export default function SetupView(): JSX.Element {
                 <button
                   type="submit"
                   className="setup-btn setup-btn--primary"
-                  disabled={ttsSaving || !ttsDirty || !ttsLoxBerryValid}
+                  disabled={ttsSaving || !ttsDirty || !ttsProviderValid}
                 >
                   {ttsSaving ? t('setup.tts.saving') : t('setup.tts.saveTts')}
                 </button>
@@ -1454,7 +1631,7 @@ export default function SetupView(): JSX.Element {
                 </button>
                 {showTtsValidation ? (
                   <span style={{ color: 'var(--warn)', fontSize: 12 }}>
-                    {t('setup.tts.validation')}
+                    {ttsValidationMessage}
                   </span>
                 ) : null}
               </div>

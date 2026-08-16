@@ -50,6 +50,8 @@ export type ContentConfig = {
   tts?: TtsConfig;
 };
 
+export type OpenAiTtsFormat = 'mp3' | 'opus' | 'aac' | 'flac' | 'wav';
+
 export type TtsProviderConfig =
   | { type: 'internal' }
   | {
@@ -62,6 +64,19 @@ export type TtsProviderConfig =
       password?: string;
       clientId?: string;
       httpBaseUrl?: string;
+    }
+  | {
+      type: 'openai-tts';
+      enabled?: boolean;
+      baseUrl?: string;
+      apiKey?: string;
+      model?: string;
+      voice?: string;
+      format?: OpenAiTtsFormat;
+      speed?: number;
+      /** Advanced, config-file only: voice per language code. */
+      voiceByLanguage?: Record<string, string>;
+      instructions?: string;
     };
 
 export type TtsConfig = {
