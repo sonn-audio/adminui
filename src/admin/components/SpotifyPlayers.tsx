@@ -11,6 +11,16 @@ import {
 const EXPIRY_WARN_DAYS = 21;
 
 /**
+ * How often the rooms re-read whether they have been signed in.
+ *
+ * It has to arrive on its own: pairing happens on a phone, in the Spotify app, while someone is
+ * standing in front of this screen waiting for the room to say it is ready. Nothing here can be
+ * told about it either — Soloist is handed its credentials directly and all the server ever sees is
+ * the profile it leaves behind — so asking again is the only way to find out.
+ */
+const REFRESH_MS = 4000;
+
+/**
  * Where the program comes from — the downloads page itself, not the tutorial around it.
  *
  * Linked rather than fetched, and that is Spotify's own instruction: the archives may not be
@@ -69,11 +79,22 @@ export function SpotifyPlayers(props: Props): React.ReactElement {
   const [message, setMessage] = React.useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const fileInput = React.useRef<HTMLInputElement | null>(null);
 
-  const load = React.useCallback(async () => {
+  /** Bumped by every action, so an answer already on its way cannot undo what one just did. */
+  const generation = React.useRef(0);
+
+  const load = React.useCallback(async (silent = false) => {
+    const at = generation.current;
     try {
-      setStatus(await fetchSoloistStatus());
+      const next = await fetchSoloistStatus();
+      if (generation.current === at) {
+        setStatus(next);
+      }
     } catch (err) {
-      setMessage({ kind: 'error', text: err instanceof Error ? err.message : String(err) });
+      // A refresh that failed leaves the last answer standing: repeating itself every few seconds
+      // would replace a working screen with an error, and overwrite what an action just said.
+      if (!silent) {
+        setMessage({ kind: 'error', text: err instanceof Error ? err.message : String(err) });
+      }
     }
   }, []);
 
@@ -82,6 +103,7 @@ export function SpotifyPlayers(props: Props): React.ReactElement {
   }, [load]);
 
   const run = async (action: () => Promise<SoloistStatus>, okText?: string): Promise<void> => {
+    generation.current += 1;
     setBusy(true);
     setMessage(null);
     try {
@@ -92,6 +114,9 @@ export function SpotifyPlayers(props: Props): React.ReactElement {
     } catch (err) {
       setMessage({ kind: 'error', text: err instanceof Error ? err.message : String(err) });
     } finally {
+      // Again on the way out, so a refresh that overlapped this action is dropped as well rather
+      // than putting the state it read before the change back on screen.
+      generation.current += 1;
       setBusy(false);
     }
   };
@@ -99,7 +124,6 @@ export function SpotifyPlayers(props: Props): React.ReactElement {
   const zones = status?.zones ?? [];
   const usingSoloist = status?.enabled === true;
   const selected = viewing ?? (usingSoloist ? 'soloist' : 'builtin');
-  const unpaired = zones.filter((zone) => !zone.paired);
   // Read from the build stamp, so it is known as soon as the file is there rather than only
   // after something has played. Falls back to what a running Soloist reported about itself.
   const expiresInDays = status?.binary.expiresInDays ?? status?.expiry?.daysAtCheck;
@@ -109,6 +133,15 @@ export function SpotifyPlayers(props: Props): React.ReactElement {
   // 90 days stopped being anybody's problem — only a machine it has no build for still asks.
   const selfUpdating = status?.autoUpdates === true;
   const lookedAt = status?.build?.checkedAt;
+
+  // Only while Soloist is the chosen player, which is the only time the rooms are listed.
+  React.useEffect(() => {
+    if (!usingSoloist) {
+      return;
+    }
+    const timer = window.setInterval(() => void load(true), REFRESH_MS);
+    return () => window.clearInterval(timer);
+  }, [usingSoloist, load]);
 
   return (
     <div className="spotify-players">
