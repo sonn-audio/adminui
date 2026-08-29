@@ -34,7 +34,7 @@
       "desc": "Your streaming accounts — Spotify, Apple Music, Tidal, Deezer, SoundCloud, YouTube Music, Music Assistant. All available to the player, the media server (DLNA) and Subsonic; when the Loxone role is on, each is also exposed as a Spotify-compatible source.",
       "addService": "+ Add service",
       "activeTitle": "Active services",
-      "activeDesc": "Every configured streaming account, Spotify included.",
+      "activeDesc": "Every streaming account you have set up. Your Spotify accounts are listed together, because they all sign in through the one Spotify app you connected.",
       "emptyTitle": "No streaming services yet",
       "emptySub": "Add Spotify, Apple Music, Tidal, Deezer, SoundCloud, YouTube Music or Music Assistant.",
       "summary": {

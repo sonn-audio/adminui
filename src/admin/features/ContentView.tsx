@@ -987,6 +987,19 @@ export default function ContentView(): JSX.Element {
     }
     return map;
   }, [zoneOptions]);
+  // Named together on one line, because the accounts share a single Spotify app: listing them as
+  // separate services reads as separate setups, which is the thing they aren't.
+  const spotifyAccountNames = React.useMemo(
+    () =>
+      spotifyAccounts
+        .map(
+          (account) =>
+            account.displayName ?? account.name ?? account.user ?? account.email ?? account.id ?? '',
+        )
+        .filter((label) => label.length > 0)
+        .join(', '),
+    [spotifyAccounts],
+  );
 
   const validateTuneIn = React.useCallback(
     async (value: string): Promise<{ ok: boolean; message?: string }> => {
@@ -3234,37 +3247,25 @@ export default function ContentView(): JSX.Element {
                 </div>
               ) : (
                 <div className="content-list">
-                  {spotifyAccounts.map((account) => {
-                    const accountKey =
-                      account.id ?? account.user ?? account.email ?? account.displayName ?? account.name ?? '';
-                    const accountLabel =
-                      account.displayName ?? account.name ?? account.user ?? account.email ?? accountKey;
-                    return (
-                      <div key={`spotify:${accountKey}`} className="content-list-row">
-                        <div className="content-list-row__main">
-                          <div className="content-list-row__title">{accountLabel}</div>
-                          <div className="content-list-row__meta">{t('content.bridge.providerNames.spotify')}</div>
+                  {spotifyAccounts.length > 0 ? (
+                    <div className="content-list-row">
+                      <div className="content-list-row__main">
+                        <div className="content-list-row__title">
+                          {t('content.bridge.providerNames.spotify')}
                         </div>
-                        <div className="content-list-row__actions">
-                          <button
-                            type="button"
-                            className="content-btn"
-                            onClick={() => setSpotifySetupOpen(true)}
-                          >
-                            {t('content.custom.edit')}
-                          </button>
-                          <button
-                            type="button"
-                            className="content-btn content-btn--danger"
-                            onClick={() => accountKey && void handleDeleteSpotifyAccount(accountKey)}
-                            disabled={deletingAccountId === accountKey}
-                          >
-                            {deletingAccountId === accountKey ? t('content.custom.removing') : t('content.custom.remove')}
-                          </button>
-                        </div>
+                        <div className="content-list-row__meta">{spotifyAccountNames}</div>
                       </div>
-                    );
-                  })}
+                      <div className="content-list-row__actions">
+                        <button
+                          type="button"
+                          className="content-btn"
+                          onClick={() => setSpotifySetupOpen(true)}
+                        >
+                          {t('content.custom.edit')}
+                        </button>
+                      </div>
+                    </div>
+                  ) : null}
                   {spotifyBridges.map((bridge) => (
                     <div key={bridge.id} className="content-list-row">
                       <div className="content-list-row__main">
