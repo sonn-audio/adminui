@@ -149,7 +149,8 @@
         "verifyError": "TuneIn-Benutzername kann gerade nicht überprüft werden.",
         "notFoundMessage": "TuneIn-Benutzername nicht gefunden.",
         "presetsFound_one": "{{count}} Preset gefunden.",
-        "presetsFound_other": "{{count}} Presets gefunden."
+        "presetsFound_other": "{{count}} Presets gefunden.",
+        "presetsEmpty": "Konto gefunden, aber es enthält keine abspielbaren Presets. Favoriten in der TuneIn-App hinzufügen — Presets, die in deinem Land nicht verfügbar sind, werden übersprungen."
       },
       "feedback": {
         "saved": "Radio-Inhalte gespeichert",

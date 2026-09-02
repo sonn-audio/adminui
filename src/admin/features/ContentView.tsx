@@ -1025,9 +1025,11 @@ export default function ContentView(): JSX.Element {
             validationStatus: 'valid',
           });
           const message =
-            count !== null
-              ? t('content.radio.validation.presetsFound', { count })
-            : t('content.radio.validation.verifyTitle');
+            count === null
+              ? t('content.radio.validation.verifyTitle')
+              : count > 0
+                ? t('content.radio.validation.presetsFound', { count })
+                : t('content.radio.validation.presetsEmpty');
           setRadioState({ validationMessage: message });
           return { ok: true, message };
         }

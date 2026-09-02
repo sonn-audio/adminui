@@ -149,7 +149,8 @@
         "verifyError": "Unable to verify the TuneIn username right now.",
         "notFoundMessage": "TuneIn username not found.",
         "presetsFound_one": "{{count}} preset found.",
-        "presetsFound_other": "{{count}} presets found."
+        "presetsFound_other": "{{count}} presets found.",
+        "presetsEmpty": "Account found, but it has no presets we can play. Add favourites in the TuneIn app — presets that are unavailable in your country are skipped."
       },
       "feedback": {
         "saved": "Radio content saved",
