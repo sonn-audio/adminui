@@ -473,7 +473,12 @@
         "rowNotSignedIn_one": "Kann noch nicht in deinen Räumen abspielen — unter Bearbeiten anmelden.",
         "rowNotSignedIn_other": "Kann noch nicht in deinen Räumen abspielen: {{accounts}} müssen noch angemeldet werden — unter Bearbeiten.",
         "rowPlayerNotReady": "Es kann noch nichts in deinen Räumen abgespielt werden: der Player ist nicht eingerichtet — unter Bearbeiten.",
-        "justSignedIn": "Angemeldet — dieses Konto kann jetzt in deinen Räumen abspielen."
+        "justSignedIn": "Angemeldet — dieses Konto kann jetzt in deinen Räumen abspielen.",
+        "toastSignedInTitle": "Bei Spotify angemeldet",
+        "toastSignedIn": "{{account}} kann jetzt in deinen Räumen abspielen.",
+        "toastFailedTitle": "Anmeldung nicht abgeschlossen",
+        "toastNotPicked": "Niemand hat „{{device}}“ in Spotify ausgewählt. Versuche es erneut beim Konto.",
+        "toastWrongAccount": "Das hat sich als {{user}} angemeldet, nicht als {{account}}. Melde dich aus der richtigen Spotify-App erneut an."
       }
     },
     "custom": {

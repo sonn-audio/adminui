@@ -473,7 +473,12 @@
         "rowNotSignedIn_one": "Cannot play in your rooms yet — open Edit to sign in.",
         "rowNotSignedIn_other": "Cannot play in your rooms yet: {{accounts}} still have to be signed in — open Edit.",
         "rowPlayerNotReady": "Nothing can play in your rooms yet: the player is not set up — open Edit.",
-        "justSignedIn": "Signed in — this account can play in your rooms now."
+        "justSignedIn": "Signed in — this account can play in your rooms now.",
+        "toastSignedInTitle": "Signed in to Spotify",
+        "toastSignedIn": "{{account}} can play in your rooms now.",
+        "toastFailedTitle": "Sign-in did not finish",
+        "toastNotPicked": "Nobody picked “{{device}}” in Spotify. Try again from the account.",
+        "toastWrongAccount": "That signed in as {{user}}, which is not {{account}}. Sign in again from the right Spotify app."
       }
     },
     "custom": {

@@ -1,4 +1,6 @@
 import React from 'react';
+import { useTranslation } from 'react-i18next';
+import { useGlobalAlert } from '../components/GlobalAlert';
 import {
   cancelSoloistPairing,
   fetchSoloistStatus,
@@ -47,6 +49,8 @@ export type SoloistAccounts = {
  * "can music come out of this account".
  */
 export function useSoloistAccounts(enabled: boolean): SoloistAccounts {
+  const { t } = useTranslation();
+  const { push } = useGlobalAlert();
   const [status, setStatus] = React.useState<SoloistStatus | null>(null);
   /** A request of ours is in flight; the buttons wait for it, nothing else reads it. */
   const [pending, setPending] = React.useState(false);
@@ -92,6 +96,49 @@ export function useSoloistAccounts(enabled: boolean): SoloistAccounts {
     },
     [load],
   );
+
+  /**
+   * Say out loud how a sign-in ended.
+   *
+   * The row it happened in already changes, but the wait is long enough to look away from — pick
+   * the room on a phone, put the phone down — and coming back to a row that quietly reads
+   * differently is not the same as being told it worked.
+   *
+   * Only on the way out of `pairing`: an account that is simply signed in says so on its own, and
+   * a settled result the server still remembers must not announce itself again on every visit.
+   */
+  const lastSeen = React.useRef(new Map<string, string>());
+  React.useEffect(() => {
+    for (const account of status?.accounts ?? []) {
+      const now = account.pairing?.state ?? 'idle';
+      const before = lastSeen.current.get(account.id);
+      lastSeen.current.set(account.id, now);
+      if (before !== 'pairing' || now === before) {
+        continue;
+      }
+      if (now === 'paired') {
+        push({
+          tone: 'success',
+          title: t('content.spotify.playback.toastSignedInTitle'),
+          message: t('content.spotify.playback.toastSignedIn', { account: account.label }),
+        });
+      } else if (now === 'failed') {
+        push({
+          tone: 'error',
+          title: t('content.spotify.playback.toastFailedTitle'),
+          message:
+            account.pairing?.error === 'wrong_account'
+              ? t('content.spotify.playback.toastWrongAccount', {
+                account: account.label,
+                user: account.pairing?.username ?? '',
+              })
+              : t('content.spotify.playback.toastNotPicked', {
+                device: account.pairing?.deviceName ?? '',
+              }),
+        });
+      }
+    }
+  }, [status, push, t]);
 
   const byId = React.useMemo(() => {
     const map = new Map<string, SoloistAccountStatus>();
