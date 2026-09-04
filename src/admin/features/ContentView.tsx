@@ -886,6 +886,16 @@ function YtMusicHealthPanel({
   );
 }
 
+/**
+ * How long the card keeps asking who is signed in after a service is saved.
+ *
+ * Eight tries three seconds apart covers the background check comfortably; it was
+ * measured landing about nineteen seconds after the save. Polling stops on its own,
+ * so an idle Content screen is not a source of traffic.
+ */
+const YTMUSIC_STATUS_POLL_ATTEMPTS = 8;
+const YTMUSIC_STATUS_POLL_MS = 3_000;
+
 export default function ContentView(): JSX.Element {
   const { t } = useTranslation();
   const [loading, setLoading] = React.useState(true);
@@ -970,6 +980,16 @@ export default function ContentView(): JSX.Element {
    * nothing. Reading it here puts the warning where someone goes to look.
    */
   const [ytmusicAuth, setYtmusicAuth] = React.useState<Record<string, YtMusicAuthStatus>>({});
+  /**
+   * Bumped whenever a service is saved or removed, to re-ask who is signed in.
+   *
+   * The effect below used to hang on `hasYtMusicService` alone — a boolean that only
+   * flips when YouTube Music appears or disappears. Pasting a working cookie does not
+   * flip it, so the status was never fetched again and the card kept showing the
+   * "signed out" verdict from whenever the page was opened, with nothing but a reload
+   * to clear it.
+   */
+  const [ytmusicAuthNonce, setYtmusicAuthNonce] = React.useState(0);
 
   const hasYtMusicService = spotifyBridges.some((b) => (b.provider || '').toLowerCase() === 'ytmusic');
   React.useEffect(() => {
@@ -978,14 +998,33 @@ export default function ContentView(): JSX.Element {
       return;
     }
     let alive = true;
-    fetchYtMusicStatus()
-      .then((status) => {
-        if (!alive) return;
-        setYtmusicAuth(Object.fromEntries(status.bridges.map((b) => [b.id, b.cookie])));
-      })
-      .catch(() => undefined);
-    return () => { alive = false; };
-  }, [hasYtMusicService]);
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // The server establishes the verdict in the background, which costs it a round
+    // trip to YouTube — measured at some seconds after the save returns. So a save
+    // asks repeatedly for a while; an ordinary page load asks once, because nothing
+    // is in flight to wait for.
+    let remaining = ytmusicAuthNonce === 0 ? 1 : YTMUSIC_STATUS_POLL_ATTEMPTS;
+
+    const poll = (): void => {
+      fetchYtMusicStatus()
+        .then((status) => {
+          if (!alive) return;
+          setYtmusicAuth(Object.fromEntries(status.bridges.map((b) => [b.id, b.cookie])));
+        })
+        .catch(() => undefined)
+        .finally(() => {
+          if (!alive) return;
+          remaining -= 1;
+          if (remaining > 0) timer = setTimeout(poll, YTMUSIC_STATUS_POLL_MS);
+        });
+    };
+    poll();
+
+    return () => {
+      alive = false;
+      if (timer) clearTimeout(timer);
+    };
+  }, [hasYtMusicService, ytmusicAuthNonce]);
   const [libraryTrackCount, setLibraryTrackCount] = React.useState<number | null>(null);
   const [libraryAlbumCount, setLibraryAlbumCount] = React.useState<number | null>(null);
   const [libraryArtistCount, setLibraryArtistCount] = React.useState<number | null>(null);
@@ -2276,6 +2315,9 @@ export default function ContentView(): JSX.Element {
           message: bridgeEditingId ? t('content.bridge.feedback.updated') : t('content.bridge.feedback.added'),
         },
       }));
+      // A freshly pasted cookie changes who is signed in, which only the server can
+      // say, and only once its background check has run.
+      setYtmusicAuthNonce((n) => n + 1);
       closeBridgeModal(false);
     } catch (err) {
       setSpotifyState({
@@ -2294,6 +2336,7 @@ export default function ContentView(): JSX.Element {
     setSpotifyState({ bridgeDeletingId: id, bridgeFeedback: null });
     try {
       await deleteSpotifyBridge(id);
+      setYtmusicAuthNonce((n) => n + 1);
       setSpotifyState((prev) => ({
         bridges: prev.bridges.filter((bridge) => bridge.id !== id),
         bridgeFeedback: { type: 'success', message: t('content.bridge.feedback.removed') },
