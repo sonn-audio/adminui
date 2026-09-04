@@ -177,11 +177,12 @@ function LoxoneIcon(): JSX.Element {
 }
 
 export default function ZonesView(): JSX.Element {
-  // Which Spotify player is in use, so the Connect switch can say it is not a choice here.
+  // Whether Spotify plays at all, so the per-zone Connect switch can say it is not a choice here:
+  // Soloist cannot advertise a room without also being able to play in it.
   const [soloistInUse, setSoloistInUse] = React.useState(false);
   React.useEffect(() => {
     void fetchSoloistStatus()
-      .then((status) => setSoloistInUse(status.enabled === true))
+      .then((status) => setSoloistInUse(status.hasApiKey === true))
       .catch(() => setSoloistInUse(false));
   }, []);
   const { t } = useTranslation();

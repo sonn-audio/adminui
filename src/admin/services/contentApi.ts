@@ -232,7 +232,28 @@ export async function deleteSpotifyAccount(accountId: string): Promise<void> {
   });
 }
 
-export type SpotifyPairingStatus = {
+/**
+ * Spotify Soloist — the client that plays Spotify.
+ *
+ * Everything here is per installation: the API key is personal to whoever generated it and the
+ * program itself is downloaded by the user, because Spotify allows neither to be shipped.
+ */
+
+/**
+ * One Spotify account, and whether Soloist can play from it.
+ *
+ * Rooms do not appear here. A room signs itself in — it advertises over Connect and stays signed in
+ * to whoever picks it in their own Spotify app — but playback this server drives has nobody to ask
+ * at the moment a track starts, so an account is signed in once, deliberately.
+ */
+export type SoloistAccountStatus = {
+  id: string;
+  label: string;
+  paired: boolean;
+  pairing: SoloistPairing;
+};
+
+export type SoloistPairing = {
   state: 'idle' | 'pairing' | 'paired' | 'failed';
   deviceName?: string;
   expiresAt?: number;
@@ -240,46 +261,8 @@ export type SpotifyPairingStatus = {
   error?: string;
 };
 
-/**
- * Ask the server to show up in the Spotify app as a device to pick.
- *
- * Returns as soon as it is advertising — the handshake only completes once someone
- * selects it, so the caller polls {@link fetchSpotifyPairingStatus} from there.
- */
-export async function startSpotifyPairing(
-  accountId: string,
-  deviceName?: string,
-): Promise<SpotifyPairingStatus> {
-  return requestJson(`${API_BASE}/spotify/librespot/zeroconf`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ accountId, deviceName }),
-    errorMessage: 'Failed to start Spotify pairing',
-  });
-}
-
-export async function fetchSpotifyPairingStatus(accountId: string): Promise<SpotifyPairingStatus> {
-  return requestJson(
-    `${API_BASE}/spotify/librespot/zeroconf?accountId=${encodeURIComponent(accountId)}`,
-    { errorMessage: 'Failed to read Spotify pairing status' },
-  );
-}
-
-/**
- * Spotify Soloist — the opt-in second playback backend.
- *
- * Everything here is per installation: the API key is personal to whoever generated it and the
- * program itself is downloaded by the user, because Spotify allows neither to be shipped.
- */
-export type SoloistZoneStatus = {
-  zoneId: number;
-  name?: string;
-  backend: 'librespot' | 'soloist';
-  paired: boolean;
-};
-
 export type SoloistStatus = {
-  enabled: boolean;
+  /** Having a key is the whole of whether this server plays Spotify; there is no second switch. */
   hasApiKey: boolean;
   /** Whether zones ask Spotify for lossless rather than letting it pick a bitrate. */
   lossless: boolean;
@@ -298,7 +281,7 @@ export type SoloistStatus = {
     expiresAt?: number;
     error?: string;
   };
-  zones: SoloistZoneStatus[];
+  accounts: SoloistAccountStatus[];
 };
 
 export async function fetchSoloistStatus(): Promise<SoloistStatus> {
@@ -307,8 +290,38 @@ export async function fetchSoloistStatus(): Promise<SoloistStatus> {
   });
 }
 
+/**
+ * Offer an account's store to the Spotify app, so someone can sign it in.
+ *
+ * Returns at once: what comes back says a device is being advertised, not that anybody has picked
+ * it. {@link fetchSoloistPairing} is how the screen finds out.
+ */
+export async function startSoloistPairing(accountId: string): Promise<SoloistPairing> {
+  return requestJson(`${API_BASE}/spotify/soloist/pair`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accountId }),
+    errorMessage: 'Failed to start Soloist pairing',
+  });
+}
+
+export async function cancelSoloistPairing(accountId: string): Promise<SoloistPairing> {
+  return requestJson(`${API_BASE}/spotify/soloist/pair`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ accountId, cancel: true }),
+    errorMessage: 'Failed to stop Soloist pairing',
+  });
+}
+
+export async function fetchSoloistPairing(accountId: string): Promise<SoloistPairing> {
+  return requestJson(
+    `${API_BASE}/spotify/soloist/pair?accountId=${encodeURIComponent(accountId)}`,
+    { errorMessage: 'Failed to read Soloist pairing' },
+  );
+}
+
 export async function saveSoloistSettings(payload: {
-  enabled?: boolean;
   apiKey?: string;
   lossless?: boolean;
 }): Promise<SoloistStatus> {

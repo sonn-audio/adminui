@@ -14,8 +14,6 @@ import {
   deleteLibraryAlbum,
   deleteSpotifyAccount,
   fetchSpotifyAuthLink,
-  fetchSpotifyPairingStatus,
-  startSpotifyPairing,
   fetchLibraryStorages,
   createLibraryStorage,
   deleteLibraryStorage,
@@ -53,6 +51,8 @@ import { useGlobalAlert } from '../components/GlobalAlert';
 import { useConfirm } from '../components/ConfirmDialog';
 import InlineState from '../components/InlineState';
 import { SpotifyPlayers } from '../components/SpotifyPlayers';
+import { SpotifyAccountRow } from '../components/SpotifyAccountRow';
+import { useSoloistAccounts } from '../hooks/useSoloistAccounts';
 import { InlineForm, InlineFormField } from '../components/InlineForm';
 import LibraryBrowser from './content/LibraryBrowser';
 import SubTabs from '../components/SubTabs';
@@ -639,16 +639,11 @@ function radioReducer(state: RadioState, action: RadioAction): RadioState {
 type SpotifyState = {
   clientId: string;
   initialClientId: string;
-  cacheEnabled: boolean;
-  initialCacheEnabled: boolean;
-  cacheSizeMb: number;
-  initialCacheSizeMb: number;
   saving: boolean;
   feedback: FeedbackMessage | null;
   accounts: SpotifyAccountConfig[];
   deletingAccountId: string | null;
   addingAccount: boolean;
-  pairingAccountId: string | null;
   refreshPending: boolean;
   bridges: SpotifyBridgeConfig[];
   bridgeModalOpen: boolean;
@@ -668,16 +663,11 @@ type SpotifyAction = {
 const initialSpotifyState: SpotifyState = {
   clientId: '',
   initialClientId: '',
-  cacheEnabled: true,
-  initialCacheEnabled: true,
-  cacheSizeMb: 1024,
-  initialCacheSizeMb: 1024,
   saving: false,
   feedback: null,
   accounts: [],
   deletingAccountId: null,
   addingAccount: false,
-  pairingAccountId: null,
   refreshPending: false,
   bridges: [],
   bridgeModalOpen: false,
@@ -904,7 +894,6 @@ export default function ContentView(): JSX.Element {
   const [addPickerOpen, setAddPickerOpen] = React.useState(false);
   const [spotifySetupOpen, setSpotifySetupOpen] = React.useState(false);
   /** The Spotify screen answers two unrelated questions; they get a tab each. */
-  const [spotifyTab, setSpotifyTab] = React.useState<'accounts' | 'engine'>('accounts');
   // The "+ Add service" picker already chose the provider, so the wizard skips
   // its own provider step (no redundant, Spotify-less second provider screen).
   const [bridgeProviderLocked, setBridgeProviderLocked] = React.useState(false);
@@ -956,16 +945,11 @@ export default function ContentView(): JSX.Element {
   const {
     clientId: spotifyClientId,
     initialClientId: initialSpotifyClientId,
-    cacheEnabled: spotifyCacheEnabled,
-    initialCacheEnabled: spotifyInitialCacheEnabled,
-    cacheSizeMb: spotifyCacheSizeMb,
-    initialCacheSizeMb: spotifyInitialCacheSizeMb,
     saving: spotifySaving,
     feedback: spotifyFeedback,
     accounts: spotifyAccounts,
     deletingAccountId,
     addingAccount: addingSpotifyAccount,
-    pairingAccountId,
     refreshPending: spotifyRefreshPending,
     bridges: spotifyBridges,
     bridgeModalOpen,
@@ -1086,10 +1070,7 @@ export default function ContentView(): JSX.Element {
   }, [contentFilter]);
 
   const radioDirty = radioUsername.trim() !== initialRadioUsername.trim();
-  const spotifyDirty =
-    spotifyClientId.trim() !== initialSpotifyClientId.trim() ||
-    spotifyCacheEnabled !== spotifyInitialCacheEnabled ||
-    spotifyCacheSizeMb !== spotifyInitialCacheSizeMb;
+  const spotifyDirty = spotifyClientId.trim() !== initialSpotifyClientId.trim();
   const storageFormValid = React.useMemo(() => {
     return (
       storageForm.name.trim().length > 0 &&
@@ -1149,6 +1130,10 @@ export default function ContentView(): JSX.Element {
   }, [zoneOptions]);
   // Named together on one line, because the accounts share a single Spotify app: listing them as
   // separate services reads as separate setups, which is the thing they aren't.
+  // Whether each account can actually play. Polled while the streaming services are on screen,
+  // because the service row itself has to be able to say when one of them cannot.
+  const soloistAccounts = useSoloistAccounts(displayedFilter === 'streaming');
+
   const spotifyAccountNames = React.useMemo(
     () =>
       spotifyAccounts
@@ -1160,6 +1145,26 @@ export default function ContentView(): JSX.Element {
         .join(', '),
     [spotifyAccounts],
   );
+
+  /**
+   * The linked accounts that cannot play yet, by name.
+   *
+   * Only counted once the server has answered: before that every account looks unpaired, and a
+   * warning that appears for a moment on every visit is worse than none.
+   */
+  const spotifyAccountsWithoutPlayback = React.useMemo(() => {
+    if (soloistAccounts.byId.size === 0) {
+      return [];
+    }
+    return spotifyAccounts
+      .map((account) => ({
+        id: account.id ?? '',
+        label:
+          account.displayName ?? account.name ?? account.user ?? account.email ?? account.id ?? '',
+      }))
+      .filter((account) => account.id && soloistAccounts.byId.get(account.id)?.paired !== true)
+      .map((account) => account.label);
+  }, [spotifyAccounts, soloistAccounts]);
 
   const validateTuneIn = React.useCallback(
     async (value: string): Promise<{ ok: boolean; message?: string }> => {
@@ -1227,15 +1232,9 @@ export default function ContentView(): JSX.Element {
         const currentSpotify = content.spotify?.clientId ?? '';
         const currentAudioServerIp = cfg.config?.system?.audioserver?.ip ?? '';
         setRadioState({ username: currentRadio, initialUsername: currentRadio });
-        const cacheEnabled = content.spotify?.cacheEnabled !== false;
-        const cacheSizeMb = typeof content.spotify?.cacheSizeMb === 'number' ? content.spotify.cacheSizeMb : 1024;
         setSpotifyState({
           clientId: currentSpotify,
           initialClientId: currentSpotify,
-          cacheEnabled,
-          initialCacheEnabled: cacheEnabled,
-          cacheSizeMb,
-          initialCacheSizeMb: cacheSizeMb,
           accounts: Array.isArray(content.spotify?.accounts)
             ? (content.spotify!.accounts! as SpotifyAccountConfig[])
             : [],
@@ -1856,14 +1855,10 @@ export default function ContentView(): JSX.Element {
       await updateContentConfig({
         spotify: {
           clientId: spotifyClientId.trim() || null,
-          cacheEnabled: spotifyCacheEnabled,
-          cacheSizeMb: spotifyCacheSizeMb,
         },
       });
       setSpotifyState({
         initialClientId: spotifyClientId,
-        initialCacheEnabled: spotifyCacheEnabled,
-        initialCacheSizeMb: spotifyCacheSizeMb,
         feedback: { type: 'success', message: t('content.spotify.feedback.saved') },
       });
     } catch (err) {
@@ -1925,52 +1920,6 @@ export default function ContentView(): JSX.Element {
    * itself as a device and someone has to pick it. Nothing happens until they do, which is why this
    * polls rather than waiting on the request.
    */
-  const handlePairSpotifyAccount = async (accountKey: string): Promise<void> => {
-    if (!accountKey || pairingAccountId) return;
-    setSpotifyState({ pairingAccountId: accountKey, feedback: null });
-    try {
-      const started = await startSpotifyPairing(accountKey);
-      const deviceName = started.deviceName ?? t('content.spotify.pair.defaultDeviceName');
-      setSpotifyState({
-        feedback: { type: 'success', message: t('content.spotify.pair.waiting', { deviceName }) },
-      });
-
-      // Poll until the server reaches a verdict rather than counting down to `expiresAt`. When a
-      // handshake was already running, that timestamp belongs to the earlier attempt and can be in
-      // the past, which used to end the loop before it polled once — reporting "not picked" the
-      // instant the button was pressed. The server owns the timeout; here we only need a stop.
-      const giveUpAt = Date.now() + 6 * 60_000;
-      while (Date.now() < giveUpAt) {
-        await new Promise((resolve) => setTimeout(resolve, 2_000));
-        const status = await fetchSpotifyPairingStatus(accountKey);
-        if (status.state === 'paired') {
-          setSpotifyState({
-            feedback: { type: 'success', message: t('content.spotify.pair.paired') },
-          });
-          scheduleSpotifyAccountRefresh();
-          return;
-        }
-        if (status.state === 'failed' || status.state === 'idle') {
-          setSpotifyState({
-            feedback: { type: 'error', message: t('content.spotify.pair.notPicked') },
-          });
-          return;
-        }
-      }
-      setSpotifyState({
-        feedback: { type: 'error', message: t('content.spotify.pair.notPicked') },
-      });
-    } catch (err) {
-      setSpotifyState({
-        feedback: {
-          type: 'error',
-          message: err instanceof Error ? err.message : t('content.spotify.pair.failed'),
-        },
-      });
-    } finally {
-      setSpotifyState({ pairingAccountId: null });
-    }
-  };
 
   const handleAddSpotifyAccount = async (): Promise<void> => {
     if (addingSpotifyAccount) return;
@@ -3419,6 +3368,27 @@ export default function ContentView(): JSX.Element {
                           {t('content.bridge.providerNames.spotify')}
                         </div>
                         <div className="content-list-row__meta">{spotifyAccountNames}</div>
+                        {/*
+                          Only ever a problem worth interrupting for, the same as the row below:
+                          a linked account can browse from the moment it is added, but playing
+                          needs a sign-in from a Spotify app that nothing else would mention. An
+                          account that can play says nothing here.
+                        */}
+                        {soloistAccounts.blocked !== null ? (
+                          // The player itself is missing something, so no account can play
+                          // whatever its own state says. That comes first: fixing an account
+                          // would change nothing until this is dealt with.
+                          <div className="content-list-row__meta content-warn">
+                            {t('content.spotify.playback.rowPlayerNotReady')}
+                          </div>
+                        ) : spotifyAccountsWithoutPlayback.length > 0 ? (
+                          <div className="content-list-row__meta content-warn">
+                            {t('content.spotify.playback.rowNotSignedIn', {
+                              count: spotifyAccountsWithoutPlayback.length,
+                              accounts: spotifyAccountsWithoutPlayback.join(', '),
+                            })}
+                          </div>
+                        ) : null}
                       </div>
                       <div className="content-list-row__actions">
                         <button
@@ -3513,41 +3483,16 @@ export default function ContentView(): JSX.Element {
               </svg>
             </button>
           </header>
-          <div className="bridge-modal__tabs">
-            <button
-              type="button"
-              className={`bridge-modal__tab${spotifyTab === 'accounts' ? ' is-on' : ''}`}
-              onClick={() => setSpotifyTab('accounts')}
-            >
-              {t('content.spotify.tabs.accounts')}
-            </button>
-            <button
-              type="button"
-              className={`bridge-modal__tab${spotifyTab === 'engine' ? ' is-on' : ''}`}
-              onClick={() => setSpotifyTab('engine')}
-            >
-              {t('content.spotify.tabs.engine')}
-            </button>
-          </div>
           <div className="bridge-modal__body">
-            {spotifyTab === 'engine' ? (
-              <SpotifyPlayers
-                accounts={spotifyAccounts.map((account) => ({
-                  key: account.id ?? account.user ?? account.email ?? account.displayName ?? account.name ?? '',
-                  label: account.displayName ?? account.name ?? account.user ?? account.email ?? '',
-                }))}
-                pairingAccountId={pairingAccountId}
-                onPairAccount={(key) => void handlePairSpotifyAccount(key)}
-                cacheEnabled={spotifyCacheEnabled}
-                cacheSizeMb={spotifyCacheSizeMb}
-                onCacheChange={(patch) => dispatchSpotify({ type: 'update', payload: patch })}
-                onSaveCache={() => void handleSaveSpotify()}
-                cacheDirty={spotifyDirty && hasSpotifyClientId && !spotifyClientIdEditing}
-                cacheSaving={spotifySaving}
-              />
-            ) : null}
-            {spotifyTab === 'accounts' ? (
-            hasSpotifyClientId && !spotifyClientIdEditing ? (
+            {/*
+              One page, in the order the setup actually happens: connect a Spotify app, install the
+              player that plays through it, then link the accounts and sign them in. It was two tabs
+              until the second one held nothing but three settings you touch once — and the giveaway
+              was the line it needed at the bottom, pointing at the other tab for the step that
+              finishes the job. Each part folds down to a line once it is done, so coming back for
+              the accounts does not mean scrolling past setup that is long finished.
+            */}
+            {hasSpotifyClientId && !spotifyClientIdEditing ? (
               <div className="spotify-configured-strip">
                 <span className="spotify-configured-strip__chip" aria-hidden="true">
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -3682,19 +3627,19 @@ export default function ContentView(): JSX.Element {
                   ) : null}
                 </div>
               </div>
-            )) : null}
+            )}
 
-            {/* Spotify accounts appear in the unified list above; add via the
-                "+ Add service" picker. Only Spotify's app client-ID + cache
-                remain here as Spotify-specific settings. */}
+            <SpotifyPlayers />
 
-            {spotifyTab === 'accounts' ? (
             <>
             {/* The linked accounts also appear in the unified services list, where Spotify is one
                 provider among many. They are repeated here because this screen offers to add one
                 and says so in its subtitle — without the list you cannot see whether that worked,
                 and someone opening "Spotify setup" because playback stopped finds nothing to act
-                on. This is where the pair action belongs for the same reason. */}
+                on. Which is exactly why each row also carries whether it can play: an account has
+                two halves — browsing, which linking gives it, and playing, which needs a sign-in
+                from a Spotify app — and both belong where the account is rather than one of them
+                being kept in the tab about the player. */}
             <div className="source-card" style={{ marginTop: 14 }}>
               <div>
                 <h3 className="source-card__title">{t('content.spotify.accountsTitle')}</h3>
@@ -3716,26 +3661,15 @@ export default function ContentView(): JSX.Element {
                     const accountLabel =
                       account.displayName ?? account.name ?? account.user ?? account.email ?? accountKey;
                     return (
-                      <div key={`spotify-setup:${accountKey}`} className="content-list-row">
-                        <div className="content-list-row__main">
-                          <div className="content-list-row__title">{accountLabel}</div>
-                          {account.email && account.email !== accountLabel ? (
-                            <div className="content-list-row__meta">{account.email}</div>
-                          ) : null}
-                        </div>
-                        <div className="content-list-row__actions">
-                          <button
-                            type="button"
-                            className="content-btn content-btn--danger"
-                            onClick={() => accountKey && void handleDeleteSpotifyAccount(accountKey)}
-                            disabled={deletingAccountId === accountKey}
-                          >
-                            {deletingAccountId === accountKey
-                              ? t('content.spotify.removingAccount')
-                              : t('content.spotify.removeAccount')}
-                          </button>
-                        </div>
-                      </div>
+                      <SpotifyAccountRow
+                        key={`spotify-setup:${accountKey}`}
+                        accountKey={accountKey}
+                        label={accountLabel}
+                        email={account.email}
+                        playback={soloistAccounts}
+                        removing={deletingAccountId === accountKey}
+                        onRemove={() => accountKey && void handleDeleteSpotifyAccount(accountKey)}
+                      />
                     );
                   })}
                 </div>
@@ -3755,7 +3689,6 @@ export default function ContentView(): JSX.Element {
               ) : null}
             </div>
             </>
-            ) : null}
           </div>
         </Modal>
       )}

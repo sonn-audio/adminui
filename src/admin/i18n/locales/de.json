@@ -438,7 +438,7 @@
       "saving": "Speichern…",
       "cancel": "Abbrechen",
       "accountsTitle": "Konten",
-      "accountsDesc": "Spotify-Konten verknüpfen, um sie in Loxone als Quellen anzubieten. Beliebig viele möglich.",
+      "accountsDesc": "Verknüpfe ein oder mehrere Spotify-Konten, um sie als Quellen in Loxone anzubieten. Jedes Konto muss außerdem einmal angemeldet werden, bevor Räume daraus abspielen können.",
       "noAccountsTitle": "Noch keine Spotify-Konten verknüpft",
       "noAccountsSub": "Hinzufügen, um Spotify-Quellen in Loxone freizuschalten.",
       "removingAccount": "Entfernen…",
@@ -447,22 +447,6 @@
       "addAccount": "+ Spotify-Konto hinzufügen",
       "addingAccount": "Hinzufügen…",
       "setClientIdFirst": "Zuerst Client-ID setzen",
-      "pair": {
-        "action": "Für Wiedergabe koppeln",
-        "pairing": "Warten…",
-        "hint": "Die Wiedergabe für dieses Konto einmal in der Spotify-App bestätigen. Erforderlich, bevor dieses Konto abspielen kann.",
-        "defaultDeviceName": "Sonn (pairing)",
-        "waiting": "Öffne Spotify auf dem Handy oder Computer und wähle „{{deviceName}}“ in der Geräteliste. Lass diese Seite offen.",
-        "paired": "Gekoppelt — dieses Konto ist bereit zum Abspielen.",
-        "notPicked": "Das Gerät wurde nicht rechtzeitig ausgewählt. Starte erneut, wenn du es in Spotify auswählen kannst.",
-        "failed": "Das Koppeln hat nicht geklappt. Bitte erneut versuchen."
-      },
-      "cache": {
-        "title": "Titel-Cache",
-        "desc": "Dekodierte Titel auf der Festplatte zwischenspeichern. Wiederholte Wiedergabe spart CDN-Downloads und vermeidet Dekodierfehler durch unvollständige Übertragungen.",
-        "size": "Größe",
-        "save": "Cache-Einstellungen speichern"
-      },
       "stickySave": "Spotify speichern",
       "feedback": {
         "saved": "Spotify-Inhalte gespeichert",
@@ -473,11 +457,24 @@
         "loginFailed": "Spotify-Login konnte nicht gestartet werden",
         "noLink": "Kein Auth-Link verfügbar"
       },
-      "tabs": {
-        "accounts": "Konten",
-        "engine": "Wiedergabe-Engine"
-      },
-      "clientIdLink": "Dashboard öffnen →"
+      "clientIdLink": "Dashboard öffnen →",
+      "playback": {
+        "ready": "Kann durchsuchen und in deinen Räumen abspielen.",
+        "browseOnly": "Kann durchsuchen, aber noch nicht abspielen — einmal aus deiner Spotify-App anmelden.",
+        "waiting": "Wartet — öffne Spotify auf deinem Handy und wähle „{{device}}“ aus der Geräteliste.",
+        "thisServer": "dieser Server",
+        "notPicked": "Niemand hat es rechtzeitig ausgewählt. Versuche es erneut und wähle es in der Geräteliste in Spotify.",
+        "wrongAccount": "Als {{user}} angemeldet — das ist ein anderes Spotify-Konto. Melde dich mit dem richtigen an.",
+        "needsKey": "Es kann noch nichts abgespielt werden: der Player hat keinen Soloist-Key — oben eintragen.",
+        "needsProgram": "Es kann noch nichts abgespielt werden: das Soloist-Programm fehlt — oben installieren.",
+        "signIn": "Zum Abspielen anmelden",
+        "signInAgain": "Neu anmelden",
+        "stopWaiting": "Nicht mehr warten",
+        "rowNotSignedIn_one": "Kann noch nicht in deinen Räumen abspielen — unter Bearbeiten anmelden.",
+        "rowNotSignedIn_other": "Kann noch nicht in deinen Räumen abspielen: {{accounts}} müssen noch angemeldet werden — unter Bearbeiten.",
+        "rowPlayerNotReady": "Es kann noch nichts in deinen Räumen abgespielt werden: der Player ist nicht eingerichtet — unter Bearbeiten.",
+        "justSignedIn": "Angemeldet — dieses Konto kann jetzt in deinen Räumen abspielen."
+      }
     },
     "custom": {
       "title": "Streaming-Dienste",
@@ -696,24 +693,9 @@
       }
     },
     "players": {
-      "heading": "Player",
-      "builtin": {
-        "name": "librespot",
-        "desc": "Der eingebaute Open-Source-Client für Spotify, sofort einsatzbereit. Spielt bis zu 320 kbps.",
-        "credentials": "Wiedergabe-Anmeldung",
-        "credentialsDesc": "Spotify akzeptiert die Anmeldungen, die dieser Server selbst erzeugen kann, nicht mehr. librespot braucht daher einmal pro Konto eine Anmeldung aus der Spotify-App."
-      },
-      "soloist": {
-        "name": "Spotify Soloist",
-        "desc": "Spotifys eigener Terminal-Client für Headless-Setups. Unterstützt verlustfreies Audio und funktioniert auch mit neueren Spotify-Premium-Konten, die mit librespot nicht mehr laufen."
-      },
-      "inUse": "aktiv",
-      "roomsTitle": "Räume",
-      "roomsWaiting": "Jeder Raum erscheint von selbst in der Spotify-App. Einmal dort auswählen, dann bleibt er angemeldet.",
-      "roomsReady": "Alle Räume sind angemeldet und erscheinen in der Spotify-App.",
-      "roomReady": "angemeldet",
-      "roomWaiting": "in Spotify auswählen",
-      "roomsDesc": "Soloist holt seine Anmeldedaten über Zeroconf: jeder Raum erscheint von selbst in der Spotify-App. Dort einmal verbinden, dann sind die Anmeldedaten gespeichert und der Raum bleibt angemeldet."
+      "intro": "Spotify Soloist ist Spotifys eigener Player für Systeme ohne Bildschirm und der, über den jeder Raum abspielt. Spotify erlaubt niemandem, den Key oder das Programm mitzuliefern — beides musst du selbst beisteuern. Ein Build läuft nach neunzig Tagen ab; das ersetzt dieser Server für dich.",
+      "readyTitle": "Player bereit",
+      "readySub": "Spotify Soloist {{version}} — {{days}} Tage bleiben für diesen Build, wird automatisch ersetzt."
     }
   },
   "hero": {

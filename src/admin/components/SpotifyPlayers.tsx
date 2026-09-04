@@ -47,34 +47,23 @@ function formatWhen(at: number): string {
     : when.toLocaleDateString();
 }
 
-type Props = {
-  /** Linked Spotify accounts, for the built-in player's playback credentials. */
-  accounts: Array<{ key: string; label: string }>;
-  pairingAccountId: string | null;
-  onPairAccount: (accountKey: string) => void;
-  cacheEnabled: boolean;
-  cacheSizeMb: number;
-  onCacheChange: (patch: { cacheEnabled?: boolean; cacheSizeMb?: number }) => void;
-  onSaveCache: () => void;
-  cacheDirty: boolean;
-  cacheSaving: boolean;
-};
-
 /**
- * Which player handles Spotify, and what each one needs.
+ * What Spotify playback needs: the program, a key, and an account signed in.
  *
- * Presented as a choice between two rather than a list of settings, because that is what it is:
- * the built-in player is there and costs nothing, Soloist plays lossless and reaches accounts the
- * built-in one cannot but has to be installed and kept current by hand. Rooms are assigned
- * individually underneath, so one can be moved without committing the rest.
+ * Not a choice any more. There used to be two clients here and this screen picked between them;
+ * the built-in one could no longer get audio keys for accounts made after Nov 2025, so for a
+ * growing share of users it played nothing at all. What is left is one client that does play, and
+ * the price of it — a key that is personal, a program Spotify will not let anyone redistribute,
+ * and a build that stops working after ninety days.
  */
-export function SpotifyPlayers(props: Props): React.ReactElement {
+export function SpotifyPlayers(): React.ReactElement {
   const { t } = useTranslation();
   /** Which card's setup is showing. The choice itself is `status.enabled`. */
-  const [viewing, setViewing] = React.useState<'builtin' | 'soloist' | null>(null);
   const [status, setStatus] = React.useState<SoloistStatus | null>(null);
   const [apiKey, setApiKey] = React.useState('');
   const [editingKey, setEditingKey] = React.useState(false);
+  /** Opened by hand, for a setup that is finished and folded away. */
+  const [expanded, setExpanded] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const [message, setMessage] = React.useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
   const fileInput = React.useRef<HTMLInputElement | null>(null);
@@ -121,9 +110,9 @@ export function SpotifyPlayers(props: Props): React.ReactElement {
     }
   };
 
-  const zones = status?.zones ?? [];
-  const usingSoloist = status?.enabled === true;
-  const selected = viewing ?? (usingSoloist ? 'soloist' : 'builtin');
+  // Having a key is the same question as playing Spotify at all: it is personal and Premium-only,
+  // so nobody has one by accident, and clearing it is how this gets turned off.
+  const hasKey = status?.hasApiKey === true;
   // Read from the build stamp, so it is known as soon as the file is there rather than only
   // after something has played. Falls back to what a running Soloist reported about itself.
   const expiresInDays = status?.binary.expiresInDays ?? status?.expiry?.daysAtCheck;
@@ -134,137 +123,73 @@ export function SpotifyPlayers(props: Props): React.ReactElement {
   const selfUpdating = status?.autoUpdates === true;
   const lookedAt = status?.build?.checkedAt;
 
-  // Only while Soloist is the chosen player, which is the only time the rooms are listed.
+  // Only while it is switched on: what changes on its own is the program, which is only fetched
+  // and only matters then.
   React.useEffect(() => {
-    if (!usingSoloist) {
+    if (!hasKey) {
       return;
     }
     const timer = window.setInterval(() => void load(true), REFRESH_MS);
     return () => window.clearInterval(timer);
-  }, [usingSoloist, load]);
+  }, [hasKey, load]);
+
+  /**
+   * Nothing to attend to: a key is saved and a working program is installed.
+   *
+   * Then this whole section folds down to a line. It is a step you take once — the program keeps
+   * itself up to date — so leaving it open would mean scrolling past finished setup every time
+   * somebody comes back for the accounts, which is the only part of this screen anybody revisits.
+   */
+  const settled =
+    Boolean(status) &&
+    hasKey &&
+    !editingKey &&
+    status?.binary.present === true &&
+    status?.binary.executable === true &&
+    !expired;
+
+  if (settled && !expanded) {
+    return (
+      <div className="spotify-players">
+        <div className="spotify-configured-strip">
+          <span className="spotify-configured-strip__chip" aria-hidden="true">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="20 6 9 17 4 12" />
+            </svg>
+          </span>
+          <div className="spotify-configured-strip__text">
+            <div className="spotify-configured-strip__title">{t('content.players.readyTitle')}</div>
+            <div className="spotify-configured-strip__sub">
+              {t('content.players.readySub', {
+                version: status?.binary.version ?? '?',
+                days: expiresInDays ?? 0,
+              })}
+            </div>
+          </div>
+          <button
+            type="button"
+            className="content-btn content-btn--sm"
+            onClick={() => setExpanded(true)}
+          >
+            {t('content.spotify.edit')}
+          </button>
+        </div>
+        {expiringSoon ? (
+          <p className="source-card__action-reason is-error">
+            {t('content.soloist.binary.expiring')}
+          </p>
+        ) : null}
+      </div>
+    );
+  }
 
   return (
     <div className="spotify-players">
-      <h3 className="spotify-players__heading">{t('content.players.heading')}</h3>
+      {/* Says what this is, because "Soloist" means nothing to somebody who has not gone looking
+          for it yet — and by the time it is folded away nobody has to read it again. */}
+      <p className="spotify-players__intro">{t('content.players.intro')}</p>
 
-      <div className="spotify-players__choice">
-        <button
-          type="button"
-          className={`player-card${!usingSoloist ? ' is-in-use' : ''}${selected === 'builtin' ? ' is-viewing' : ''}`}
-          onClick={() => {
-            setViewing('builtin');
-            if (usingSoloist) {
-              void run(() => saveSoloistSettings({ enabled: false }));
-            }
-          }}
-        >
-          <span className="player-card__name">
-            {t('content.players.builtin.name')}
-            {!usingSoloist ? (
-              <span className="player-card__badge">{t('content.players.inUse')}</span>
-            ) : null}
-          </span>
-          <span className="player-card__desc">{t('content.players.builtin.desc')}</span>
-        </button>
-        <button
-          type="button"
-          className={`player-card${usingSoloist ? ' is-in-use' : ''}${selected === 'soloist' ? ' is-viewing' : ''}`}
-          onClick={() => {
-            setViewing('soloist');
-            if (!usingSoloist) {
-              void run(() => saveSoloistSettings({ enabled: true }));
-            }
-          }}
-        >
-          <span className="player-card__name">
-            {t('content.players.soloist.name')}
-            <span className="player-card__tag">{t('content.soloist.experimental')}</span>
-            {usingSoloist ? (
-              <span className="player-card__badge">{t('content.players.inUse')}</span>
-            ) : null}
-          </span>
-          <span className="player-card__desc">{t('content.players.soloist.desc')}</span>
-        </button>
-      </div>
-
-      {selected === 'builtin' ? (
-        <div className="spotify-players__panel">
-          <div className="content-toggle-card">
-            <div className="content-toggle-card__info">
-              <h3 className="content-toggle-card__title">{t('content.spotify.cache.title')}</h3>
-              <p className="content-toggle-card__desc">{t('content.spotify.cache.desc')}</p>
-            </div>
-            <div className="content-toggle-card__group">
-              <span className="content-toggle-card__group-label">
-                {t('content.spotify.cache.size')}
-              </span>
-              <div className="content-input content-input--inline" style={{ width: 120 }}>
-                <input
-                  type="number"
-                  value={props.cacheSizeMb}
-                  onChange={(event) =>
-                    props.onCacheChange({ cacheSizeMb: Number(event.target.value) || 0 })
-                  }
-                />
-                <span className="content-input__suffix">MB</span>
-              </div>
-            </div>
-            <button
-              type="button"
-              className={`content-toggle${props.cacheEnabled ? ' is-on' : ''}`}
-              aria-label={t('content.spotify.cache.title')}
-              onClick={() => props.onCacheChange({ cacheEnabled: !props.cacheEnabled })}
-            />
-          </div>
-          {/* Only this player needs it. Spotify stopped accepting the logins the server can mint
-              for itself, so the built-in player has to be handed credentials from the Spotify app
-              once per account. Soloist has its own login and never sees this. */}
-          <div className="spotify-players__tile">
-            <div>
-              <h3 className="content-toggle-card__title">
-                {t('content.players.builtin.credentials')}
-              </h3>
-              <p className="content-toggle-card__desc">
-                {t('content.players.builtin.credentialsDesc')}
-              </p>
-            </div>
-            <div className="content-list">
-              {props.accounts.map((account) => (
-                <div key={account.key} className="content-list-row">
-                  <div className="content-list-row__main">
-                    <div className="content-list-row__title">{account.label || account.key}</div>
-                  </div>
-                  <div className="content-list-row__actions">
-                    <button
-                      type="button"
-                      className="content-btn"
-                      disabled={Boolean(props.pairingAccountId)}
-                      onClick={() => props.onPairAccount(account.key)}
-                    >
-                      {props.pairingAccountId === account.key
-                        ? t('content.spotify.pair.pairing')
-                        : t('content.spotify.pair.action')}
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-          {props.cacheDirty ? (
-            <div className="source-card__save-row" style={{ justifyContent: 'flex-end' }}>
-              <button
-                type="button"
-                className="content-btn content-btn--primary"
-                onClick={props.onSaveCache}
-                disabled={props.cacheSaving}
-              >
-                {props.cacheSaving ? t('content.spotify.saving') : t('content.spotify.cache.save')}
-              </button>
-            </div>
-          ) : null}
-        </div>
-      ) : (
-        <div className="spotify-players__panel">
+      <div className="spotify-players__panel">
           <div className="content-toggle-card">
             <div className="content-toggle-card__info">
               <h3 className="content-toggle-card__title">{t('content.soloist.key.title')}</h3>
@@ -436,34 +361,7 @@ export function SpotifyPlayers(props: Props): React.ReactElement {
 
           {/* A tile like the two above it: the key is a thing you have or have not, not a form
               standing loose under a heading. */}
-        </div>
-      )}
-
-      {usingSoloist ? (
-        <div className="spotify-players__tile">
-          {/* Not an action: a zone's Soloist advertises itself over Zeroconf and waits, so what
-              is missing is someone connecting to it once in the Spotify app — which is what
-              hands it the credentials it then keeps. Saying that is the whole of it. */}
-          <div>
-            <h3 className="content-toggle-card__title">{t('content.players.roomsTitle')}</h3>
-            <p className="content-toggle-card__desc">{t('content.players.roomsDesc')}</p>
-          </div>
-          <div className="content-list">
-            {zones.map((zone) => (
-              <div key={zone.zoneId} className="content-list-row">
-                <div className="content-list-row__main">
-                  <div className="content-list-row__title">{zone.name ?? `#${zone.zoneId}`}</div>
-                </div>
-                <div className="content-list-row__actions">
-                  <span className={zone.paired ? 'content-ok' : 'content-warn'}>
-                    {zone.paired ? t('content.players.roomReady') : t('content.players.roomWaiting')}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      ) : null}
+      </div>
 
       {message ? (
         <p className={`source-card__action-reason${message.kind === 'error' ? ' is-error' : ''}`}>

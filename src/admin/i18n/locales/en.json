@@ -438,7 +438,7 @@
       "saving": "Saving…",
       "cancel": "Cancel",
       "accountsTitle": "Accounts",
-      "accountsDesc": "Link one or more Spotify accounts to expose them as sources in Loxone. Add as many as you need.",
+      "accountsDesc": "Link one or more Spotify accounts to expose them as sources in Loxone. Each account also needs signing in once before rooms can play from it.",
       "noAccountsTitle": "No Spotify accounts linked yet",
       "noAccountsSub": "Add one to enable Spotify sources in Loxone.",
       "removingAccount": "Removing…",
@@ -447,22 +447,6 @@
       "addAccount": "+ Add Spotify account",
       "addingAccount": "Adding…",
       "setClientIdFirst": "Set a Client ID first",
-      "pair": {
-        "action": "Pair for playback",
-        "pairing": "Waiting…",
-        "hint": "Confirm playback for this account once from the Spotify app. Needed before this account can play.",
-        "defaultDeviceName": "Sonn (pairing)",
-        "waiting": "Open Spotify on your phone or computer and pick \"{{deviceName}}\" from the device list. Keep this page open.",
-        "paired": "Paired — this account is ready to play.",
-        "notPicked": "The device wasn't picked in time. Start again when you're ready to select it in Spotify.",
-        "failed": "Pairing didn't work. Please try again."
-      },
-      "cache": {
-        "title": "Track cache",
-        "desc": "Cache decoded tracks on disk. Repeat plays skip the CDN download and avoid decode errors from partial transfers.",
-        "size": "Size",
-        "save": "Save cache settings"
-      },
       "stickySave": "Save Spotify",
       "feedback": {
         "saved": "Spotify content saved",
@@ -473,11 +457,24 @@
         "loginFailed": "Failed to start Spotify login",
         "noLink": "No auth link available"
       },
-      "tabs": {
-        "accounts": "Accounts",
-        "engine": "Playback engine"
-      },
-      "clientIdLink": "Open the dashboard →"
+      "clientIdLink": "Open the dashboard →",
+      "playback": {
+        "ready": "Can browse and play in your rooms.",
+        "browseOnly": "Can browse, but cannot play yet — sign in once from your Spotify app.",
+        "waiting": "Waiting — open Spotify on your phone and pick “{{device}}” from the device list.",
+        "thisServer": "this server",
+        "notPicked": "Nobody picked it in time. Try again and pick it from the device list in Spotify.",
+        "wrongAccount": "Signed in as {{user}} — that is a different Spotify account. Sign in again from the right one.",
+        "needsKey": "Nothing can play yet: the player has no Soloist key — add one above.",
+        "needsProgram": "Nothing can play yet: the Soloist program is missing — install it above.",
+        "signIn": "Sign in to play",
+        "signInAgain": "Sign in again",
+        "stopWaiting": "Stop waiting",
+        "rowNotSignedIn_one": "Cannot play in your rooms yet — open Edit to sign in.",
+        "rowNotSignedIn_other": "Cannot play in your rooms yet: {{accounts}} still have to be signed in — open Edit.",
+        "rowPlayerNotReady": "Nothing can play in your rooms yet: the player is not set up — open Edit.",
+        "justSignedIn": "Signed in — this account can play in your rooms now."
+      }
     },
     "custom": {
       "title": "Streaming services",
@@ -696,24 +693,9 @@
       }
     },
     "players": {
-      "heading": "Player",
-      "builtin": {
-        "name": "librespot",
-        "desc": "The open-source Spotify client, built in and ready to use. Plays up to 320 kbps.",
-        "credentials": "Playback credentials",
-        "credentialsDesc": "Spotify no longer accepts the logins this server can create on its own, so librespot needs credentials handed to it from the Spotify app once per account."
-      },
-      "soloist": {
-        "name": "Spotify Soloist",
-        "desc": "Spotify's own terminal client for headless setups. Supports lossless audio and also works with newer Spotify Premium accounts that no longer work with librespot."
-      },
-      "inUse": "in use",
-      "roomsTitle": "Rooms",
-      "roomsWaiting": "Each room shows up in the Spotify app on its own. Pick one there once and it stays signed in.",
-      "roomsReady": "Every room is signed in and shows up in the Spotify app.",
-      "roomReady": "signed in",
-      "roomWaiting": "pick it in Spotify",
-      "roomsDesc": "Soloist gets its credentials over Zeroconf: each room appears in your Spotify app by itself. Connect to it there once and its credentials are stored — after that it stays signed in."
+      "intro": "Spotify Soloist is Spotify's own player for systems without a screen, and the one every room plays through. Spotify lets nobody ship the key or the program, so both are yours to provide — and a build stops working after ninety days, which this server replaces for you.",
+      "readyTitle": "Player ready",
+      "readySub": "Spotify Soloist {{version}} — {{days}} days left on this build, replaced automatically."
     }
   },
   "hero": {

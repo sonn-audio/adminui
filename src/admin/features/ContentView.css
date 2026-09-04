@@ -1261,6 +1261,44 @@
   color: var(--text);
 }
 
+/* A sentence rather than a label: what this row can do, or what it is waiting for. */
+.content-list-row__sub {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--text-dim);
+  margin-top: 3px;
+}
+
+/* Three states worth telling apart at a glance, without turning the row into a traffic light. */
+.content-list-row__sub.is-ok {
+  color: var(--text-muted);
+}
+
+.content-list-row__sub.is-warn {
+  color: var(--warning, #fbbf24);
+}
+
+/* Something is happening and the reader has a job to do; the plain text colour carries it. */
+.content-list-row__sub.is-wait {
+  color: var(--text);
+}
+
+/* What this tab is about, before the tiles that configure it. */
+.spotify-players__intro {
+  margin: 14px 0;
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--text-dim);
+}
+
+/* A pointer to the tab that owns the thing, not a setting of its own. */
+.spotify-players__note {
+  margin: 14px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
 .content-list-row__meta {
   font-family: var(--font-mono);
   font-size: 10px;
@@ -1271,6 +1309,7 @@
 
 .content-list-row__actions {
   display: flex;
+  align-items: center;
   gap: 8px;
   flex-shrink: 0;
 }
