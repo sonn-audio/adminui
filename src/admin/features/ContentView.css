@@ -1728,6 +1728,22 @@
   margin-bottom: 16px;
 }
 
+/* The cookie steps: a list, styled to sit in the same key as the paragraph above it
+   rather than at the browser's default 40px indent. */
+.bridge-modal__steps {
+  padding-inline-start: 18px;
+  margin-top: 4px;
+  margin-bottom: 16px;
+}
+
+.bridge-modal__steps li {
+  margin-bottom: 4px;
+}
+
+.bridge-modal__steps li:last-child {
+  margin-bottom: 0;
+}
+
 .bridge-modal__panel-desc a {
   color: var(--accent);
   text-decoration: none;

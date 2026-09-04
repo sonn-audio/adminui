@@ -582,9 +582,31 @@
         "uploadHint": "Vor dem Upload private_key.pem und/oder client_id.bin auswählen."
       },
       "ytmusic": {
-        "desc": "YouTube Music nutzt Browser-Cookies zur Authentifizierung. Den vollständigen Cookie-Header einer angemeldeten music.youtube.com-Sitzung einfügen, um Bibliothek und gemochte Titel zu aktivieren.",
+        "desc": "YouTube Music meldet sich über ein Browser-Cookie an. Es aus einem privaten Fenster kopieren — ein Cookie aus einem normalen Tab funktioniert nur etwa eine Stunde, weil YouTube es ersetzt, solange dieser Tab offen bleibt.",
         "title": "Cookie-Header",
-        "descLong": "Aus den DevTools von <1>music.youtube.com</1>: Netzwerkanfrage → Request Headers → <3>cookie: …</3> (nur den Wert einfügen)."
+        "descLong": "Den Cookie-Header einer angemeldeten music.youtube.com-Sitzung einfügen. Das private Fenster ist der Teil, der ihn haltbar macht:",
+        "step1": "Ein privates (Inkognito-)Fenster öffnen und bei music.youtube.com anmelden.",
+        "step2": "Mit F12 die Entwicklertools öffnen, zu Netzwerk wechseln und eine Anfrage an music.youtube.com anklicken.",
+        "step3": "Unter Request Headers alles nach \"cookie:\" kopieren und unten einfügen.",
+        "step4": "Das private Fenster schließen, ohne sich abzumelden. So ersetzt YouTube das gerade kopierte Cookie nicht.",
+        "potTitle": "Höhere Streamqualität",
+        "potDesc": "YouTube gibt seine 256-kbps-Streams nur an Apps heraus, die belegen können, dass die Anfrage von einem echten Player kommt. Diesen Nachweis liefert ein kleiner Hilfsdienst, den man selbst betreibt (der bgutil-PO-Token-Provider, standardmäßig Port 4416). Bleibt das Feld leer, funktioniert die Wiedergabe weiterhin — in Standardqualität.",
+        "healthTitle": "Verbindungsprüfung",
+        "check": "Jetzt prüfen",
+        "checking": "Prüfe…",
+        "cookieOk": "Cookie funktioniert — die Bibliothek ist erreichbar.",
+        "cookieExpired": "Dieses Cookie ist nicht mehr angemeldet. Mit den Schritten oben ein neues einfügen.",
+        "cookieInvalid": "Das sieht nicht wie ein Cookie einer angemeldeten Sitzung aus.",
+        "cookieMissing": "Noch kein Cookie gespeichert.",
+        "cookieUnchecked": "Noch nicht geprüft.",
+        "potOff": "Kein Hilfsdienst eingetragen — Wiedergabe in Standardqualität.",
+        "potOk": "Hilfsdienst antwortet.",
+        "potUnreachable": "Hilfsdienst hat nicht geantwortet: {{error}}",
+        "potUnchecked": "Hilfsdienst noch nicht geprüft.",
+        "potPluginMissing": "Das dafür nötige yt-dlp-Plugin ist noch nicht installiert.",
+        "potPluginInstall": "Plugin installieren",
+        "potPluginInstalling": "Installiere…",
+        "potPluginInstalled": "Plugin installiert ({{version}})."
       },
       "youtube": {
         "desc": "YouTube funktioniert ohne Zugangsdaten — Suche und öffentliche Playlists sind sofort verfügbar. Ein API-Schlüssel verbessert die Suchqualität.",

@@ -582,9 +582,31 @@
         "uploadHint": "Select private_key.pem and/or client_id.bin before uploading."
       },
       "ytmusic": {
-        "desc": "YouTube Music uses browser cookies for authentication. Paste a full Cookie header from your signed-in music.youtube.com session to enable your library and liked songs.",
+        "desc": "YouTube Music signs in with a browser cookie. Copy it from a private browsing window — a cookie taken from a normal tab stops working within the hour, because YouTube replaces it while that tab stays open.",
         "title": "Cookie header",
-        "descLong": "From <1>music.youtube.com</1> DevTools: Network request → Request Headers → <3>cookie: …</3> (paste the value only)."
+        "descLong": "Paste the cookie header from a signed-in music.youtube.com session. Using a private window is the part that makes it last:",
+        "step1": "Open a private (incognito) window and sign in to music.youtube.com.",
+        "step2": "Press F12 for developer tools, open Network, and click any request to music.youtube.com.",
+        "step3": "Under Request Headers, copy everything after \"cookie:\" and paste it below.",
+        "step4": "Close the private window without signing out. That keeps YouTube from replacing the cookie you just copied.",
+        "potTitle": "Higher quality streams",
+        "potDesc": "YouTube keeps its 256 kbps streams for apps that can prove a request came from a real player. That proof comes from a small helper service you run yourself (the bgutil PO Token provider, port 4416 by default). Leave this empty and playback still works, at standard quality.",
+        "healthTitle": "Connection check",
+        "check": "Check now",
+        "checking": "Checking…",
+        "cookieOk": "Cookie works — your library is reachable.",
+        "cookieExpired": "This cookie is not signed in any more. Paste a fresh one using the steps above.",
+        "cookieInvalid": "This does not look like a cookie from a signed-in session.",
+        "cookieMissing": "No cookie saved yet.",
+        "cookieUnchecked": "Not checked yet.",
+        "potOff": "No helper service set — playing at standard quality.",
+        "potOk": "Helper service is answering.",
+        "potUnreachable": "Helper service did not answer: {{error}}",
+        "potUnchecked": "Helper service not checked yet.",
+        "potPluginMissing": "The yt-dlp plugin this needs is not installed yet.",
+        "potPluginInstall": "Install plugin",
+        "potPluginInstalling": "Installing…",
+        "potPluginInstalled": "Plugin installed ({{version}})."
       },
       "youtube": {
         "desc": "YouTube works out of the box with no credentials — search and public playlists are available immediately. Add an API key for better search quality.",

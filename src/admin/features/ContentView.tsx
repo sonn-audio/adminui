@@ -28,9 +28,15 @@ import {
   updateInputsConfig,
   fetchYtDlpStatus,
   updateYtDlp,
+  fetchYtMusicStatus,
+  checkYtMusic,
+  installYtMusicPotPlugin,
 } from '../services/contentApi';
 import type {
   YtDlpStatusResponse,
+  YtMusicCheckResponse,
+  YtMusicAuthStatus,
+  PotPluginStatus,
   LibraryStorage,
   CustomRadioEntry,
   LibraryCoverSample,
@@ -125,6 +131,7 @@ type BridgeFormState = {
   apiKey: string;
   userToken: string;
   ytmusicCookie: string;
+  ytmusicPoTokenUrl: string;
   deezerArl: string;
   tidalAccessToken: string;
   tidalCountryCode: string;
@@ -489,6 +496,7 @@ const createEmptyBridgeForm = (): BridgeFormState => ({
   apiKey: '',
   userToken: '',
   ytmusicCookie: '',
+  ytmusicPoTokenUrl: '',
   deezerArl: '',
   tidalAccessToken: '',
   tidalCountryCode: 'US',
@@ -755,6 +763,134 @@ function YtDlpPanel(): JSX.Element {
         <button type="button" className="content-btn" onClick={() => void runUpdate()} disabled={busy}>
           {busy ? t('content.bridge.ytdlp.updating') : t('content.bridge.ytdlp.update')}
         </button>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * Whether YouTube Music is actually able to do anything right now.
+ *
+ * Both questions it answers used to have no answer anywhere in the UI. A cookie that
+ * has expired shows up as an empty library and nothing else — YouTube answers such a
+ * request with a normal-looking 200 and a sign-in prompt — so "my library is gone"
+ * and "I have no library" looked identical. And the PO Token helper that a Premium
+ * account needs for its high quality stream is either there or silently not.
+ */
+function YtMusicHealthPanel({
+  bridgeId,
+  cookie,
+  potTokenUrl,
+}: {
+  bridgeId: string | null;
+  cookie: string;
+  potTokenUrl: string;
+}): JSX.Element {
+  const { t } = useTranslation();
+  const [checked, setChecked] = React.useState<YtMusicCheckResponse | null>(null);
+  const [plugin, setPlugin] = React.useState<PotPluginStatus | null>(null);
+  const [savedCookie, setSavedCookie] = React.useState<YtMusicAuthStatus | null>(null);
+  const [busy, setBusy] = React.useState(false);
+  const [installing, setInstalling] = React.useState(false);
+  const [note, setNote] = React.useState<{ kind: 'ok' | 'error'; text: string } | null>(null);
+
+  // On open, read what the server already knows. Deliberately not a live check:
+  // that asks YouTube, and opening a modal should not spend an account's request.
+  React.useEffect(() => {
+    let alive = true;
+    fetchYtMusicStatus()
+      .then((s) => {
+        if (!alive) return;
+        setPlugin(s.potPlugin);
+        const row = bridgeId ? s.bridges.find((b) => b.id === bridgeId) : undefined;
+        setSavedCookie(row?.cookie ?? null);
+      })
+      .catch(() => undefined);
+    return () => { alive = false; };
+  }, [bridgeId]);
+
+  const runCheck = async (): Promise<void> => {
+    setBusy(true);
+    setNote(null);
+    try {
+      const next = await checkYtMusic({
+        cookie: cookie.trim() || undefined,
+        bridgeId: bridgeId ?? undefined,
+        potTokenUrl: potTokenUrl.trim() || undefined,
+      });
+      setChecked(next);
+      setPlugin(next.potPlugin);
+      setSavedCookie(next.cookie);
+    } catch (err) {
+      setNote({ kind: 'error', text: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const runInstall = async (): Promise<void> => {
+    setInstalling(true);
+    setNote(null);
+    try {
+      const next = await installYtMusicPotPlugin();
+      setPlugin(next);
+      setNote({ kind: 'ok', text: t('content.bridge.ytmusic.potPluginInstalled', { version: next.installed ?? '' }) });
+    } catch (err) {
+      setNote({ kind: 'error', text: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setInstalling(false);
+    }
+  };
+
+  const cookieState = checked?.cookie ?? savedCookie;
+  const cookieLine = !cookieState
+    ? { text: t('content.bridge.ytmusic.cookieUnchecked'), warn: false }
+    : cookieState.state === 'ok'
+      ? { text: t('content.bridge.ytmusic.cookieOk'), warn: false }
+      : cookieState.state === 'expired'
+        ? { text: t('content.bridge.ytmusic.cookieExpired'), warn: true }
+        : cookieState.state === 'invalid'
+          ? { text: cookieState.message ?? t('content.bridge.ytmusic.cookieInvalid'), warn: true }
+          : cookieState.state === 'missing'
+            ? { text: t('content.bridge.ytmusic.cookieMissing'), warn: false }
+            : { text: cookieState.message ?? t('content.bridge.ytmusic.cookieUnchecked'), warn: false };
+
+  const potServer = checked?.potServer ?? null;
+  const potLine = !potTokenUrl.trim()
+    ? { text: t('content.bridge.ytmusic.potOff'), warn: false }
+    : !plugin?.installed
+      ? { text: t('content.bridge.ytmusic.potPluginMissing'), warn: true }
+      : !potServer
+        ? { text: t('content.bridge.ytmusic.potUnchecked'), warn: false }
+        : potServer.ok
+          ? { text: t('content.bridge.ytmusic.potOk', { version: potServer.version ?? '' }), warn: false }
+          : { text: t('content.bridge.ytmusic.potUnreachable', { error: potServer.error ?? '' }), warn: true };
+
+  return (
+    <div className="content-toggle-card">
+      <div className="content-toggle-card__info">
+        <h3 className="content-toggle-card__title">{t('content.bridge.ytmusic.healthTitle')}</h3>
+        <p className="content-toggle-card__desc">
+          <span className={cookieLine.warn ? 'content-warn' : undefined}>{cookieLine.text}</span>
+        </p>
+        <p className="content-toggle-card__desc">
+          <span className={potLine.warn ? 'content-warn' : undefined}>{potLine.text}</span>
+        </p>
+        {note ? (
+          <p className={note.kind === 'error' ? 'source-card__action-reason is-error' : 'content-toggle-card__desc'}>
+            {note.text}
+          </p>
+        ) : null}
+      </div>
+      <div className="content-toggle-card__group">
+        <button type="button" className="content-btn" onClick={() => void runCheck()} disabled={busy}>
+          {busy ? t('content.bridge.ytmusic.checking') : t('content.bridge.ytmusic.check')}
+        </button>
+        {plugin && !plugin.installed ? (
+          <button type="button" className="content-btn" onClick={() => void runInstall()} disabled={installing}>
+            {installing ? t('content.bridge.ytmusic.potPluginInstalling') : t('content.bridge.ytmusic.potPluginInstall')}
+          </button>
+        ) : null}
       </div>
     </div>
   );
@@ -1594,6 +1730,7 @@ export default function ContentView(): JSX.Element {
         apiKey: bridge.apiKey ?? '',
         userToken: bridge.userToken ?? '',
         ytmusicCookie: bridge.ytmusicCookie ?? '',
+        ytmusicPoTokenUrl: bridge.ytmusicPoTokenUrl ?? '',
         deezerArl: bridge.deezerArl ?? '',
         tidalAccessToken: bridge.tidalAccessToken ?? '',
         tidalCountryCode: bridge.tidalCountryCode ?? 'US',
@@ -2133,6 +2270,8 @@ export default function ContentView(): JSX.Element {
     }
     if (provider === 'ytmusic') {
       if (bridgeForm.ytmusicCookie.trim()) payload.ytmusicCookie = bridgeForm.ytmusicCookie.trim();
+      // Sent even when empty, so clearing the field actually turns the PO Token path off.
+      payload.ytmusicPoTokenUrl = bridgeForm.ytmusicPoTokenUrl.trim();
     }
     if (provider === 'deezer') {
       if (bridgeForm.deezerArl.trim()) payload.deezerArl = bridgeForm.deezerArl.trim();
@@ -4305,12 +4444,19 @@ export default function ContentView(): JSX.Element {
             {currentStepId === 'ytm-cookie' && (
               <div className="bridge-modal__panel">
                 <div className="bridge-modal__panel-title">{t('content.bridge.ytmusic.title')}</div>
-                <p className="bridge-modal__panel-desc">
-                  <Trans i18nKey="content.bridge.ytmusic.descLong">
-                    From <code>music.youtube.com</code> DevTools: Network request → Request Headers →{' '}
-                    <code>cookie: …</code> (paste the value only).
-                  </Trans>
-                </p>
+                <p className="bridge-modal__panel-desc">{t('content.bridge.ytmusic.descLong')}</p>
+                {/*
+                  The private-window detour is the whole instruction, not a tip: YouTube
+                  rotates account cookies on open tabs, so a cookie copied from a normal
+                  session stops working within the hour, which is what people report as
+                  "my library keeps disappearing". Closing the window is what pins it.
+                */}
+                <ol className="bridge-modal__panel-desc bridge-modal__steps">
+                  <li>{t('content.bridge.ytmusic.step1')}</li>
+                  <li>{t('content.bridge.ytmusic.step2')}</li>
+                  <li>{t('content.bridge.ytmusic.step3')}</li>
+                  <li>{t('content.bridge.ytmusic.step4')}</li>
+                </ol>
                 <div className="bridge-modal__field">
                   <textarea
                     id="bridge-ytmusic-cookie"
@@ -4322,6 +4468,24 @@ export default function ContentView(): JSX.Element {
                     rows={5}
                   />
                 </div>
+                <div className="bridge-modal__panel-title">{t('content.bridge.ytmusic.potTitle')}</div>
+                <p className="bridge-modal__panel-desc">{t('content.bridge.ytmusic.potDesc')}</p>
+                <div className="bridge-modal__field">
+                  <input
+                    id="bridge-ytmusic-potoken"
+                    type="text"
+                    className="bridge-modal__input is-mono"
+                    value={bridgeForm.ytmusicPoTokenUrl}
+                    onChange={(e) => updateBridgeForm({ ytmusicPoTokenUrl: e.target.value })}
+                    placeholder="http://127.0.0.1:4416"
+                    autoComplete="off"
+                  />
+                </div>
+                <YtMusicHealthPanel
+                  bridgeId={bridgeEditingId}
+                  cookie={bridgeForm.ytmusicCookie}
+                  potTokenUrl={bridgeForm.ytmusicPoTokenUrl}
+                />
                 <YtDlpPanel />
               </div>
             )}

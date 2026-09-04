@@ -341,6 +341,7 @@ export type SpotifyBridgeConfig = {
   developerToken?: string;
   userToken?: string;
   ytmusicCookie?: string;
+  ytmusicPoTokenUrl?: string;
   deezerArl?: string;
   tidalAccessToken?: string;
   tidalCountryCode?: string;
@@ -360,6 +361,7 @@ export type CreateSpotifyBridgePayload = {
   developerToken?: string;
   userToken?: string;
   ytmusicCookie?: string;
+  ytmusicPoTokenUrl?: string;
   deezerArl?: string;
   tidalAccessToken?: string;
   tidalCountryCode?: string;
@@ -522,5 +524,77 @@ export async function updateYtDlp(): Promise<YtDlpStatusResponse> {
   return requestJson(`${API_BASE}/ytdlp/update`, {
     method: 'POST',
     errorMessage: 'Failed to update yt-dlp',
+  });
+}
+
+export type YtMusicAuthState = 'ok' | 'expired' | 'invalid' | 'missing' | 'unknown';
+
+export type YtMusicAuthStatus = {
+  state: YtMusicAuthState;
+  checkedAt: number | null;
+  message: string | null;
+};
+
+export type PotServerPing = {
+  ok: boolean;
+  version: string | null;
+  error: string | null;
+};
+
+export type PotPluginStatus = {
+  installed: string | null;
+  latest: string | null;
+  updateAvailable: boolean | null;
+  previous?: string | null;
+};
+
+export type YtMusicStatusResponse = {
+  defaultPotTokenUrl: string;
+  potPlugin: PotPluginStatus;
+  bridges: Array<{
+    id: string;
+    label: string;
+    hasCookie: boolean;
+    cookie: YtMusicAuthStatus;
+    potTokenUrl: string | null;
+    potServer: PotServerPing | null;
+  }>;
+};
+
+export type YtMusicCheckResponse = {
+  cookie: YtMusicAuthStatus;
+  potPlugin: PotPluginStatus;
+  potServer: PotServerPing | null;
+};
+
+/**
+ * Whether the saved YouTube Music cookie still works, and whether the PO Token
+ * plumbing is in place. A cookie that expired reports as an empty library and
+ * nothing else, so this is the only way to tell the two apart.
+ */
+export async function fetchYtMusicStatus(): Promise<YtMusicStatusResponse> {
+  return requestJson(`${API_BASE}/ytmusic/status`, {
+    errorMessage: 'Failed to read the YouTube Music status',
+  });
+}
+
+/** Check what the form currently holds, before it is saved. */
+export async function checkYtMusic(payload: {
+  cookie?: string;
+  bridgeId?: string;
+  potTokenUrl?: string;
+}): Promise<YtMusicCheckResponse> {
+  return requestJson(`${API_BASE}/ytmusic/check`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+    errorMessage: 'Failed to check the YouTube Music cookie',
+  });
+}
+
+export async function installYtMusicPotPlugin(): Promise<PotPluginStatus> {
+  return requestJson(`${API_BASE}/ytmusic/pot-plugin/install`, {
+    method: 'POST',
+    errorMessage: 'Failed to install the PO Token provider plugin',
   });
 }
