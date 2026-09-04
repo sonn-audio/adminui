@@ -978,6 +978,30 @@ export default function ContentView(): JSX.Element {
   } = spotifyState;
 
   const [libraryStatus, setLibraryStatus] = React.useState<ScanStatus | null>(null);
+  /**
+   * Per-account YouTube Music cookie verdicts, for the service list.
+   *
+   * A cookie that stopped signing in shows up as an empty library and nothing else,
+   * so without this the list of services looks perfectly healthy while a room plays
+   * nothing. Reading it here puts the warning where someone goes to look.
+   */
+  const [ytmusicAuth, setYtmusicAuth] = React.useState<Record<string, YtMusicAuthStatus>>({});
+
+  const hasYtMusicService = spotifyBridges.some((b) => (b.provider || '').toLowerCase() === 'ytmusic');
+  React.useEffect(() => {
+    if (!hasYtMusicService) {
+      setYtmusicAuth({});
+      return;
+    }
+    let alive = true;
+    fetchYtMusicStatus()
+      .then((status) => {
+        if (!alive) return;
+        setYtmusicAuth(Object.fromEntries(status.bridges.map((b) => [b.id, b.cookie])));
+      })
+      .catch(() => undefined);
+    return () => { alive = false; };
+  }, [hasYtMusicService]);
   const [libraryTrackCount, setLibraryTrackCount] = React.useState<number | null>(null);
   const [libraryAlbumCount, setLibraryAlbumCount] = React.useState<number | null>(null);
   const [libraryArtistCount, setLibraryArtistCount] = React.useState<number | null>(null);
@@ -3414,6 +3438,17 @@ export default function ContentView(): JSX.Element {
                         <div className="content-list-row__meta">
                           {t(`content.bridge.providerNames.${bridge.provider}`, { defaultValue: bridge.provider })}
                         </div>
+                        {/*
+                          Only ever a problem worth interrupting for. A working account
+                          says nothing here, so the row stays quiet until the cookie has
+                          actually stopped signing in.
+                        */}
+                        {ytmusicAuth[bridge.id]?.state === 'expired' ||
+                        ytmusicAuth[bridge.id]?.state === 'invalid' ? (
+                          <div className="content-list-row__meta content-warn">
+                            {t('content.bridge.ytmusic.rowExpired')}
+                          </div>
+                        ) : null}
                       </div>
                       <div className="content-list-row__actions">
                         <button

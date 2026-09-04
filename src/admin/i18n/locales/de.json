@@ -606,7 +606,8 @@
         "potPluginMissing": "Das dafür nötige yt-dlp-Plugin ist noch nicht installiert.",
         "potPluginInstall": "Plugin installieren",
         "potPluginInstalling": "Installiere…",
-        "potPluginInstalled": "Plugin installiert ({{version}})."
+        "potPluginInstalled": "Plugin installiert ({{version}}).",
+        "rowExpired": "Dieses Konto ist abgemeldet — unter Bearbeiten ein neues Cookie einfügen, damit die Bibliothek zurückkommt."
       },
       "youtube": {
         "desc": "YouTube funktioniert ohne Zugangsdaten — Suche und öffentliche Playlists sind sofort verfügbar. Ein API-Schlüssel verbessert die Suchqualität.",

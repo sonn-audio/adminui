@@ -606,7 +606,8 @@
         "potPluginMissing": "The yt-dlp plugin this needs is not installed yet.",
         "potPluginInstall": "Install plugin",
         "potPluginInstalling": "Installing…",
-        "potPluginInstalled": "Plugin installed ({{version}})."
+        "potPluginInstalled": "Plugin installed ({{version}}).",
+        "rowExpired": "This account is signed out — open Edit and paste a fresh cookie to get its library back."
       },
       "youtube": {
         "desc": "YouTube works out of the box with no credentials — search and public playlists are available immediately. Add an API key for better search quality.",
