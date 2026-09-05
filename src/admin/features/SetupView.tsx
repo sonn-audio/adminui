@@ -56,6 +56,10 @@ type OpenAiTtsDraft = {
   model: string;
   voice: string;
   format: OpenAiTtsFormat;
+  instructions: string;
+  // A list rather than the map it becomes on save, so a half-typed row does not
+  // vanish the moment its language code is briefly empty or duplicated.
+  voiceByLanguage: Array<{ code: string; voice: string }>;
 };
 
 type TtsDraft = {
@@ -66,6 +70,19 @@ type TtsDraft = {
 };
 
 const OPENAI_TTS_FORMATS: OpenAiTtsFormat[] = ['mp3', 'opus', 'aac', 'flac', 'wav'];
+
+/**
+ * Rows the user has not finished are not sent: a code without a voice, or the
+ * reverse, would otherwise be saved as a mapping that can never match.
+ */
+function collectVoiceByLanguage(
+  rows: Array<{ code: string; voice: string }>,
+): Record<string, string> | undefined {
+  const entries = rows
+    .map((row) => [row.code.trim().toLowerCase(), row.voice.trim()] as const)
+    .filter(([code, voice]) => code.length > 0 && voice.length > 0);
+  return entries.length ? Object.fromEntries(entries) : undefined;
+}
 
 function isHttpUrl(value: string): boolean {
   try {
@@ -103,7 +120,15 @@ function buildTtsDraft(config: RootConfig | undefined): TtsDraft {
   const draft: TtsDraft = {
     type: provider?.type === 'loxberry-tts' || provider?.type === 'openai-tts' ? provider.type : 'internal',
     loxberry: { host: '', mqttPort: '1883', protocol: 'mqtt', username: '', password: '' },
-    openai: { baseUrl: '', apiKey: '', model: '', voice: '', format: 'mp3' },
+    openai: {
+      baseUrl: '',
+      apiKey: '',
+      model: '',
+      voice: '',
+      format: 'mp3',
+      instructions: '',
+      voiceByLanguage: [],
+    },
     fallbackToInternal: tts?.fallbackToInternal !== false,
   };
   if (provider?.type === 'loxberry-tts') {
@@ -122,6 +147,11 @@ function buildTtsDraft(config: RootConfig | undefined): TtsDraft {
       model: provider.model ?? '',
       voice: provider.voice ?? '',
       format: provider.format ?? 'mp3',
+      instructions: provider.instructions ?? '',
+      voiceByLanguage: Object.entries(provider.voiceByLanguage ?? {}).map(([code, voice]) => ({
+        code,
+        voice,
+      })),
     };
   }
   return draft;
@@ -435,6 +465,11 @@ export default function SetupView(): JSX.Element {
         ? t('setup.tts.currentOpenAi')
         : t('setup.tts.currentInternal');
   const showTtsValidation = ttsDirty && !ttsProviderValid;
+  // Mirrors the server-side warning: tts-1 (also what an empty model falls back
+  // to) drops instructions silently, so say so where the style is typed in.
+  const ttsInstructionsIgnored =
+    ttsDraft.openai.instructions.trim().length > 0 &&
+    /^tts-1(-|$)/i.test(ttsDraft.openai.model.trim() || 'tts-1');
   const ttsValidationMessage =
     ttsDraft.type === 'openai-tts' ? t('setup.tts.validationOpenAi') : t('setup.tts.validation');
 
@@ -782,6 +817,8 @@ export default function SetupView(): JSX.Element {
                         model: ttsDraft.openai.model.trim() || undefined,
                         voice: ttsDraft.openai.voice.trim() || undefined,
                         format: ttsDraft.openai.format,
+                        instructions: ttsDraft.openai.instructions.trim() || undefined,
+                        voiceByLanguage: collectVoiceByLanguage(ttsDraft.openai.voiceByLanguage),
                       },
                 fallbackToInternal: ttsDraft.fallbackToInternal,
               },
@@ -1500,6 +1537,126 @@ export default function SetupView(): JSX.Element {
                             setTtsDirty(true);
                           }}
                         />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="setup-row">
+                    <div className="setup-row__info">
+                      <div className="setup-row__label">{t('setup.tts.openaiInstructions')}</div>
+                      <div className="setup-row__desc">
+                        {ttsInstructionsIgnored
+                          ? t('setup.tts.openaiInstructionsIgnored')
+                          : t('setup.tts.openaiInstructionsDesc')}
+                      </div>
+                    </div>
+                    <div className="setup-row__control">
+                      <div className="setup-input" style={{ minWidth: 280 }}>
+                        <textarea
+                          rows={3}
+                          value={ttsDraft.openai.instructions}
+                          placeholder={t('setup.tts.openaiInstructionsPlaceholder')}
+                          onChange={(event) => {
+                            const instructions = event.target.value;
+                            setTtsDraft((prev) => ({
+                              ...prev,
+                              openai: { ...prev.openai, instructions },
+                            }));
+                            setTtsDirty(true);
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="setup-row">
+                    <div className="setup-row__info">
+                      <div className="setup-row__label">{t('setup.tts.openaiVoiceByLanguage')}</div>
+                      <div className="setup-row__desc">{t('setup.tts.openaiVoiceByLanguageDesc')}</div>
+                    </div>
+                    <div className="setup-row__control">
+                      <div className="setup-tts-voicemap">
+                        {ttsDraft.openai.voiceByLanguage.map((row, index) => (
+                          <div className="setup-tts-voicemap__row" key={index}>
+                            <div className="setup-input" style={{ width: 90 }}>
+                              <input
+                                type="text"
+                                value={row.code}
+                                placeholder="de"
+                                aria-label={t('setup.tts.openaiVoiceMapCode')}
+                                onChange={(event) => {
+                                  const code = event.target.value;
+                                  setTtsDraft((prev) => ({
+                                    ...prev,
+                                    openai: {
+                                      ...prev.openai,
+                                      voiceByLanguage: prev.openai.voiceByLanguage.map((entry, i) =>
+                                        i === index ? { ...entry, code } : entry,
+                                      ),
+                                    },
+                                  }));
+                                  setTtsDirty(true);
+                                }}
+                              />
+                            </div>
+                            <div className="setup-input" style={{ flex: 1, minWidth: 140 }}>
+                              <input
+                                type="text"
+                                value={row.voice}
+                                placeholder="de_female"
+                                aria-label={t('setup.tts.openaiVoiceMapVoice')}
+                                onChange={(event) => {
+                                  const voice = event.target.value;
+                                  setTtsDraft((prev) => ({
+                                    ...prev,
+                                    openai: {
+                                      ...prev.openai,
+                                      voiceByLanguage: prev.openai.voiceByLanguage.map((entry, i) =>
+                                        i === index ? { ...entry, voice } : entry,
+                                      ),
+                                    },
+                                  }));
+                                  setTtsDirty(true);
+                                }}
+                              />
+                            </div>
+                            <button
+                              type="button"
+                              className="setup-btn setup-btn--small"
+                              aria-label={t('setup.tts.openaiVoiceMapRemove')}
+                              onClick={() => {
+                                setTtsDraft((prev) => ({
+                                  ...prev,
+                                  openai: {
+                                    ...prev.openai,
+                                    voiceByLanguage: prev.openai.voiceByLanguage.filter(
+                                      (_, i) => i !== index,
+                                    ),
+                                  },
+                                }));
+                                setTtsDirty(true);
+                              }}
+                            >
+                              {t('setup.tts.openaiVoiceMapRemove')}
+                            </button>
+                          </div>
+                        ))}
+                        <button
+                          type="button"
+                          className="setup-btn setup-btn--small"
+                          onClick={() => {
+                            setTtsDraft((prev) => ({
+                              ...prev,
+                              openai: {
+                                ...prev.openai,
+                                voiceByLanguage: [...prev.openai.voiceByLanguage, { code: '', voice: '' }],
+                              },
+                            }));
+                            setTtsDirty(true);
+                          }}
+                        >
+                          {t('setup.tts.openaiVoiceMapAdd')}
+                        </button>
                       </div>
                     </div>
                   </div>

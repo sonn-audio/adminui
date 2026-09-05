@@ -74,7 +74,7 @@ export type TtsProviderConfig =
       voice?: string;
       format?: OpenAiTtsFormat;
       speed?: number;
-      /** Advanced, config-file only: voice per language code. */
+      /** Voice per language code, for backends with language-specific voices. */
       voiceByLanguage?: Record<string, string>;
       instructions?: string;
     };
