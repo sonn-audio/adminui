@@ -346,6 +346,14 @@ body[data-theme='light']::before {
      light override below swaps the fill. */
 }
 
+/* The chevron's colour is baked into its data URI, so it cannot follow the text
+   the way a glyph would — the light theme needs its own, dark on white. */
+body[data-theme='light'] select {
+  background-image:
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23374151' stroke-width='1.6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, var(--surface-0) 0%, var(--surface-1) 100%);
+}
+
 body[data-theme='light'] .zones-eyebrow::before,
 body[data-theme='light'] .logs-eyebrow::before,
 body[data-theme='light'] .zones-modal__eyebrow::before,
@@ -945,12 +953,14 @@ select {
   border-radius: 8px;
   padding: 0.55rem 2.4rem 0.55rem 0.9rem;
   background-color: var(--control-bg);
+  /* Chevron first: it is the topmost layer, so the surface gradient below it
+     fills the control without painting over the only hint that this opens. */
   background-image:
-    linear-gradient(180deg, var(--surface-0) 0%, var(--surface-1) 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23e9eef6' stroke-width='1.6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23e9eef6' stroke-width='1.6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E"),
+    linear-gradient(180deg, var(--surface-0) 0%, var(--surface-1) 100%);
   background-repeat: no-repeat, no-repeat;
-  background-position: 0 0, right 0.9rem center;
-  background-size: 100% 100%, 0.9rem;
+  background-position: right 0.9rem center, 0 0;
+  background-size: 0.9rem, 100% 100%;
   font-size: 0.95rem;
   font-family: var(--font-sans);
   color: var(--color-text);

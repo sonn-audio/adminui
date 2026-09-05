@@ -914,24 +914,141 @@
   padding: 4px 18px 14px;
 }
 
+/* One width for every control in this card, so the right edge is a line rather
+   than a ragged staircase of per-field widths. */
+.setup-tts-field {
+  width: 320px;
+  max-width: 100%;
+  min-width: 0;
+}
+
+/* Splits the fields into what you must set, what shapes the voice, and what is
+   optional — a group label, not a heading, so it stays quieter than the rows. */
+.setup-rows__group {
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 1.8px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  padding: 18px 4px 6px;
+}
+
+/* The label already separates; a border under it as well reads as a double rule. */
+.setup-rows__group + .setup-row {
+  border-top: none;
+}
+
+/* A row whose control is several lines tall: hang the label from the top rather
+   than floating it in the middle of a textarea. */
+.setup-row--tall {
+  align-items: start;
+}
+
 .setup-tts-voicemap {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  align-items: flex-start;
-  min-width: 280px;
+  align-items: stretch;
 }
 
 .setup-tts-voicemap__row {
   display: flex;
   gap: 8px;
   align-items: center;
-  width: 100%;
+}
+
+.setup-tts-voicemap__code {
+  width: 78px;
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+.setup-tts-voicemap__voice {
+  flex: 1 1 auto;
+  min-width: 0;
 }
 
 .setup-btn--small {
-  padding: 6px 10px;
-  font-size: 12px;
+  align-self: flex-start;
+  padding: 6px 11px;
+  font-size: 9px;
+}
+
+/* Removes one row; an icon because the label would outweigh the two fields. */
+.setup-iconbtn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  min-height: 0;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+  color: var(--text-dim);
+  transition: color 0.15s, border-color 0.15s, background 0.15s;
+}
+
+.setup-iconbtn:hover {
+  color: var(--warn);
+  border-color: rgba(245, 158, 11, 0.35);
+  background: rgba(245, 158, 11, 0.06);
+}
+
+/* The third group is foldable, so it wears the same label as SERVER and VOICE
+   rather than a button of its own kind sitting between the rows. */
+.setup-rows__group--toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  min-height: 0;
+  transition: color 0.15s;
+}
+
+.setup-rows__group--toggle:hover,
+.setup-rows__group--toggle.is-open {
+  color: var(--text-muted);
+}
+
+.setup-rows__group--toggle svg {
+  transition: transform 0.25s var(--spring, cubic-bezier(0.2, 0.8, 0.2, 1));
+}
+
+.setup-rows__group--toggle.is-open svg {
+  transform: rotate(90deg);
+}
+
+.setup-adv-panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.3s var(--spring, cubic-bezier(0.2, 0.8, 0.2, 1));
+}
+
+.setup-adv-panel.is-open {
+  grid-template-rows: 1fr;
+}
+
+.setup-adv-panel__inner {
+  overflow: hidden;
+  min-height: 0;
+}
+
+.setup-adv-panel .setup-row:first-child {
+  border-top: none;
+}
+
+/* The note sits between rows here, not under a section, so it needs less room. */
+.setup-note--tight {
+  margin: 0 4px 14px;
 }
 
 .setup-tts-provider {

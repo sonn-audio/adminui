@@ -204,6 +204,7 @@ export default function SetupView(): JSX.Element {
   const [ttsDraft, setTtsDraft] = React.useState<TtsDraft>(() => buildTtsDraft(undefined));
   const [ttsDirty, setTtsDirty] = React.useState(false);
   const [ttsSaving, setTtsSaving] = React.useState(false);
+  const [ttsAdvancedOpen, setTtsAdvancedOpen] = React.useState(false);
   const eventSoundInputRef = React.useRef<HTMLInputElement | null>(null);
   const importInputRef = React.useRef<HTMLInputElement | null>(null);
   const { push: pushAlert } = useGlobalAlert();
@@ -315,7 +316,13 @@ export default function SetupView(): JSX.Element {
 
   React.useEffect(() => {
     if (!ttsDirty) {
-      setTtsDraft(buildTtsDraft(data?.config));
+      const next = buildTtsDraft(data?.config);
+      setTtsDraft(next);
+      // Open the panel when it holds something, so a style set earlier — or in
+      // config.json — is never hidden behind a toggle nobody thought to press.
+      if (next.openai.instructions.trim() || next.openai.voiceByLanguage.length) {
+        setTtsAdvancedOpen(true);
+      }
     }
   }, [data?.config, ttsDirty]);
 
@@ -1458,40 +1465,41 @@ export default function SetupView(): JSX.Element {
 
               {ttsDraft.type === 'openai-tts' ? (
                 <div className="setup-rows">
+                  <div className="setup-rows__group">{t('setup.tts.openaiGroupServer')}</div>
                   <div className="setup-row">
                     <div className="setup-row__info">
                       <div className="setup-row__label">{t('setup.tts.openaiBaseUrl')}</div>
                       <div className="setup-row__desc">{t('setup.tts.openaiBaseUrlDesc')}</div>
                     </div>
                     <div className="setup-row__control">
-                      <div className="setup-input" style={{ minWidth: 280 }}>
+                      <div className="setup-input setup-tts-field">
                         <input
                           type="text"
                           value={ttsDraft.openai.baseUrl}
                           placeholder="http://localhost:8880/v1"
                           onChange={(event) => {
-                            const baseUrl = event.target.value;
-                            setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, baseUrl } }));
+                            const next = event.target.value;
+                            setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, baseUrl: next } }));
                             setTtsDirty(true);
                           }}
                         />
                       </div>
                     </div>
                   </div>
-
                   <div className="setup-row">
                     <div className="setup-row__info">
                       <div className="setup-row__label">{t('setup.tts.openaiApiKey')}</div>
                       <div className="setup-row__desc">{t('setup.tts.openaiApiKeyDesc')}</div>
                     </div>
                     <div className="setup-row__control">
-                      <div className="setup-input" style={{ minWidth: 220 }}>
+                      <div className="setup-input setup-tts-field">
                         <input
                           type="password"
                           value={ttsDraft.openai.apiKey}
+                          placeholder={t('setup.tts.openaiApiKeyPlaceholder')}
                           onChange={(event) => {
-                            const apiKey = event.target.value;
-                            setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, apiKey } }));
+                            const next = event.target.value;
+                            setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, apiKey: next } }));
                             setTtsDirty(true);
                           }}
                         />
@@ -1499,189 +1507,213 @@ export default function SetupView(): JSX.Element {
                     </div>
                   </div>
 
-                  <div className="setup-row">
-                    <div className="setup-row__info">
-                      <div className="setup-row__label">{t('setup.tts.openaiModel')}</div>
-                      <div className="setup-row__desc">{t('setup.tts.openaiModelDesc')}</div>
-                    </div>
-                    <div className="setup-row__control">
-                      <div className="setup-input" style={{ minWidth: 200 }}>
-                        <input
-                          type="text"
-                          value={ttsDraft.openai.model}
-                          placeholder="tts-1"
-                          onChange={(event) => {
-                            const model = event.target.value;
-                            setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, model } }));
-                            setTtsDirty(true);
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-
+                  <div className="setup-rows__group">{t('setup.tts.openaiGroupVoice')}</div>
                   <div className="setup-row">
                     <div className="setup-row__info">
                       <div className="setup-row__label">{t('setup.tts.openaiVoice')}</div>
                       <div className="setup-row__desc">{t('setup.tts.openaiVoiceDesc')}</div>
                     </div>
                     <div className="setup-row__control">
-                      <div className="setup-input" style={{ minWidth: 200 }}>
+                      <div className="setup-input setup-tts-field">
                         <input
                           type="text"
                           value={ttsDraft.openai.voice}
                           placeholder="alloy"
                           onChange={(event) => {
-                            const voice = event.target.value;
-                            setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, voice } }));
+                            const next = event.target.value;
+                            setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, voice: next } }));
                             setTtsDirty(true);
                           }}
                         />
                       </div>
                     </div>
                   </div>
-
                   <div className="setup-row">
                     <div className="setup-row__info">
-                      <div className="setup-row__label">{t('setup.tts.openaiInstructions')}</div>
-                      <div className="setup-row__desc">
-                        {ttsInstructionsIgnored
-                          ? t('setup.tts.openaiInstructionsIgnored')
-                          : t('setup.tts.openaiInstructionsDesc')}
-                      </div>
+                      <div className="setup-row__label">{t('setup.tts.openaiModel')}</div>
+                      <div className="setup-row__desc">{t('setup.tts.openaiModelDesc')}</div>
                     </div>
                     <div className="setup-row__control">
-                      <div className="setup-input" style={{ minWidth: 280 }}>
-                        <textarea
-                          rows={3}
-                          value={ttsDraft.openai.instructions}
-                          placeholder={t('setup.tts.openaiInstructionsPlaceholder')}
+                      <div className="setup-input setup-tts-field">
+                        <input
+                          type="text"
+                          value={ttsDraft.openai.model}
+                          placeholder="tts-1"
                           onChange={(event) => {
-                            const instructions = event.target.value;
-                            setTtsDraft((prev) => ({
-                              ...prev,
-                              openai: { ...prev.openai, instructions },
-                            }));
+                            const next = event.target.value;
+                            setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, model: next } }));
                             setTtsDirty(true);
                           }}
                         />
                       </div>
                     </div>
                   </div>
-
-                  <div className="setup-row">
-                    <div className="setup-row__info">
-                      <div className="setup-row__label">{t('setup.tts.openaiVoiceByLanguage')}</div>
-                      <div className="setup-row__desc">{t('setup.tts.openaiVoiceByLanguageDesc')}</div>
-                    </div>
-                    <div className="setup-row__control">
-                      <div className="setup-tts-voicemap">
-                        {ttsDraft.openai.voiceByLanguage.map((row, index) => (
-                          <div className="setup-tts-voicemap__row" key={index}>
-                            <div className="setup-input" style={{ width: 90 }}>
-                              <input
-                                type="text"
-                                value={row.code}
-                                placeholder="de"
-                                aria-label={t('setup.tts.openaiVoiceMapCode')}
-                                onChange={(event) => {
-                                  const code = event.target.value;
-                                  setTtsDraft((prev) => ({
-                                    ...prev,
-                                    openai: {
-                                      ...prev.openai,
-                                      voiceByLanguage: prev.openai.voiceByLanguage.map((entry, i) =>
-                                        i === index ? { ...entry, code } : entry,
-                                      ),
-                                    },
-                                  }));
-                                  setTtsDirty(true);
-                                }}
-                              />
-                            </div>
-                            <div className="setup-input" style={{ flex: 1, minWidth: 140 }}>
-                              <input
-                                type="text"
-                                value={row.voice}
-                                placeholder="de_female"
-                                aria-label={t('setup.tts.openaiVoiceMapVoice')}
-                                onChange={(event) => {
-                                  const voice = event.target.value;
-                                  setTtsDraft((prev) => ({
-                                    ...prev,
-                                    openai: {
-                                      ...prev.openai,
-                                      voiceByLanguage: prev.openai.voiceByLanguage.map((entry, i) =>
-                                        i === index ? { ...entry, voice } : entry,
-                                      ),
-                                    },
-                                  }));
-                                  setTtsDirty(true);
-                                }}
-                              />
-                            </div>
-                            <button
-                              type="button"
-                              className="setup-btn setup-btn--small"
-                              aria-label={t('setup.tts.openaiVoiceMapRemove')}
-                              onClick={() => {
-                                setTtsDraft((prev) => ({
-                                  ...prev,
-                                  openai: {
-                                    ...prev.openai,
-                                    voiceByLanguage: prev.openai.voiceByLanguage.filter(
-                                      (_, i) => i !== index,
-                                    ),
-                                  },
-                                }));
-                                setTtsDirty(true);
-                              }}
-                            >
-                              {t('setup.tts.openaiVoiceMapRemove')}
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          type="button"
-                          className="setup-btn setup-btn--small"
-                          onClick={() => {
-                            setTtsDraft((prev) => ({
-                              ...prev,
-                              openai: {
-                                ...prev.openai,
-                                voiceByLanguage: [...prev.openai.voiceByLanguage, { code: '', voice: '' }],
-                              },
-                            }));
-                            setTtsDirty(true);
-                          }}
-                        >
-                          {t('setup.tts.openaiVoiceMapAdd')}
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-
                   <div className="setup-row">
                     <div className="setup-row__info">
                       <div className="setup-row__label">{t('setup.tts.openaiFormat')}</div>
                       <div className="setup-row__desc">{t('setup.tts.openaiFormatDesc')}</div>
                     </div>
                     <div className="setup-row__control">
-                      <div className="setup-input" style={{ width: 140 }}>
-                        <select
-                          value={ttsDraft.openai.format}
-                          onChange={(event) => {
-                            const format = event.target.value as OpenAiTtsFormat;
-                            setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, format } }));
-                            setTtsDirty(true);
-                          }}
-                        >
-                          {OPENAI_TTS_FORMATS.map((format) => (
-                            <option key={format} value={format}>
-                              {format}
-                            </option>
-                          ))}
-                        </select>
+                      <select
+                        className="setup-tts-field"
+                        value={ttsDraft.openai.format}
+                        onChange={(event) => {
+                          const format = event.target.value as OpenAiTtsFormat;
+                          setTtsDraft((prev) => ({ ...prev, openai: { ...prev.openai, format } }));
+                          setTtsDirty(true);
+                        }}
+                      >
+                        {OPENAI_TTS_FORMATS.map((format) => (
+                          <option key={format} value={format}>
+                            {format}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    className={`setup-rows__group setup-rows__group--toggle${ttsAdvancedOpen ? ' is-open' : ''}`}
+                    aria-expanded={ttsAdvancedOpen}
+                    onClick={() => setTtsAdvancedOpen((open) => !open)}
+                  >
+                    <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                    {t('setup.tts.openaiAdvanced')}
+                  </button>
+
+                  <div className={`setup-adv-panel${ttsAdvancedOpen ? ' is-open' : ''}`}>
+                    <div className="setup-adv-panel__inner">
+                      <div className="setup-row setup-row--tall">
+                        <div className="setup-row__info">
+                          <div className="setup-row__label">{t('setup.tts.openaiInstructions')}</div>
+                          <div className="setup-row__desc">{t('setup.tts.openaiInstructionsDesc')}</div>
+                        </div>
+                        <div className="setup-row__control">
+                          <div className="setup-input setup-tts-field">
+                            <textarea
+                              rows={3}
+                              value={ttsDraft.openai.instructions}
+                              placeholder={t('setup.tts.openaiInstructionsPlaceholder')}
+                              onChange={(event) => {
+                                const instructions = event.target.value;
+                                setTtsDraft((prev) => ({
+                                  ...prev,
+                                  openai: { ...prev.openai, instructions },
+                                }));
+                                setTtsDirty(true);
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </div>
+
+                      {ttsInstructionsIgnored ? (
+                        <div className="setup-note setup-note--tight setup-note--warn">
+                          <InfoGlyph />
+                          <span>{t('setup.tts.openaiInstructionsIgnored')}</span>
+                        </div>
+                      ) : null}
+
+                      <div className="setup-row setup-row--tall">
+                        <div className="setup-row__info">
+                          <div className="setup-row__label">{t('setup.tts.openaiVoiceByLanguage')}</div>
+                          <div className="setup-row__desc">{t('setup.tts.openaiVoiceByLanguageDesc')}</div>
+                        </div>
+                        <div className="setup-row__control">
+                          <div className="setup-tts-voicemap setup-tts-field">
+                            {ttsDraft.openai.voiceByLanguage.map((entry, index) => (
+                              <div className="setup-tts-voicemap__row" key={index}>
+                                <div className="setup-input setup-tts-voicemap__code">
+                                  <input
+                                    type="text"
+                                    value={entry.code}
+                                    placeholder="de"
+                                    aria-label={t('setup.tts.openaiVoiceMapCode')}
+                                    onChange={(event) => {
+                                      const code = event.target.value;
+                                      setTtsDraft((prev) => ({
+                                        ...prev,
+                                        openai: {
+                                          ...prev.openai,
+                                          voiceByLanguage: prev.openai.voiceByLanguage.map((row, i) =>
+                                            i === index ? { ...row, code } : row,
+                                          ),
+                                        },
+                                      }));
+                                      setTtsDirty(true);
+                                    }}
+                                  />
+                                </div>
+                                <div className="setup-input setup-tts-voicemap__voice">
+                                  <input
+                                    type="text"
+                                    value={entry.voice}
+                                    placeholder="de_female"
+                                    aria-label={t('setup.tts.openaiVoiceMapVoice')}
+                                    onChange={(event) => {
+                                      const voice = event.target.value;
+                                      setTtsDraft((prev) => ({
+                                        ...prev,
+                                        openai: {
+                                          ...prev.openai,
+                                          voiceByLanguage: prev.openai.voiceByLanguage.map((row, i) =>
+                                            i === index ? { ...row, voice } : row,
+                                          ),
+                                        },
+                                      }));
+                                      setTtsDirty(true);
+                                    }}
+                                  />
+                                </div>
+                                <button
+                                  type="button"
+                                  className="setup-iconbtn"
+                                  title={t('setup.tts.openaiVoiceMapRemove')}
+                                  aria-label={t('setup.tts.openaiVoiceMapRemove')}
+                                  onClick={() => {
+                                    setTtsDraft((prev) => ({
+                                      ...prev,
+                                      openai: {
+                                        ...prev.openai,
+                                        voiceByLanguage: prev.openai.voiceByLanguage.filter(
+                                          (_, i) => i !== index,
+                                        ),
+                                      },
+                                    }));
+                                    setTtsDirty(true);
+                                  }}
+                                >
+                                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" aria-hidden="true">
+                                    <line x1="6" y1="6" x2="18" y2="18" />
+                                    <line x1="18" y1="6" x2="6" y2="18" />
+                                  </svg>
+                                </button>
+                              </div>
+                            ))}
+                            <button
+                              type="button"
+                              className="setup-btn setup-btn--small"
+                              onClick={() => {
+                                setTtsDraft((prev) => ({
+                                  ...prev,
+                                  openai: {
+                                    ...prev.openai,
+                                    voiceByLanguage: [
+                                      ...prev.openai.voiceByLanguage,
+                                      { code: '', voice: '' },
+                                    ],
+                                  },
+                                }));
+                                setTtsDirty(true);
+                              }}
+                            >
+                              {t('setup.tts.openaiVoiceMapAdd')}
+                            </button>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </div>
@@ -1779,7 +1811,12 @@ export default function SetupView(): JSX.Element {
                   type="button"
                   className="setup-btn"
                   onClick={() => {
-                    setTtsDraft(buildTtsDraft(data?.config));
+                    const restored = buildTtsDraft(data?.config);
+                    setTtsDraft(restored);
+                    setTtsAdvancedOpen(
+                      Boolean(restored.openai.instructions.trim()) ||
+                        restored.openai.voiceByLanguage.length > 0,
+                    );
                     setTtsDirty(false);
                   }}
                   disabled={!ttsDirty}
