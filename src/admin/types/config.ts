@@ -35,7 +35,11 @@ export type ContentConfig = {
   webdav?: { enabled?: boolean };
   /** Subsonic API server; read the resolved state from /subsonic/status instead. */
   subsonic?: { enabled?: boolean; providers?: string[]; directoryLimit?: number };
-  radio?: { tuneInUsername?: string | null; radioParadise?: { enabled?: boolean } };
+  radio?: {
+    tuneInUsername?: string | null;
+    radioParadise?: { enabled?: boolean };
+    somaFm?: { enabled?: boolean };
+  };
   spotify?: {
     accounts?: unknown[];
     /** @deprecated Non-Spotify accounts moved to content.streamingServices. */

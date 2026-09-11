@@ -6,6 +6,7 @@ export type ContentUpdatePayload = {
   radio?: {
     tuneInUsername?: string | null;
     radioParadise?: { enabled?: boolean };
+    somaFm?: { enabled?: boolean };
   };
   spotify?: {
     clientId?: string | null;

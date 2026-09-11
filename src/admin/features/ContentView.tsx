@@ -917,6 +917,8 @@ export default function ContentView(): JSX.Element {
   const [radioPickerOpen, setRadioPickerOpen] = React.useState(false);
   const [tuneInModalOpen, setTuneInModalOpen] = React.useState(false);
   const [radioParadiseEnabled, setRadioParadiseEnabled] = React.useState(true);
+  // Off until switched on, which is how the server reads an absent setting too.
+  const [somaFmEnabled, setSomaFmEnabled] = React.useState(false);
   const [appleAuthOpen, setAppleAuthOpen] = React.useState(false);
   const [appleAuthHeight, setAppleAuthHeight] = React.useState(180);
   const [appleMusicWidevineStatus, setAppleMusicWidevineStatus] = React.useState<AppleMusicWidevineStatus | null>(null);
@@ -1281,6 +1283,7 @@ export default function ContentView(): JSX.Element {
         if (signal?.aborted) return;
         const content = cfg.config?.content ?? {};
         setRadioParadiseEnabled(content.radio?.radioParadise?.enabled !== false);
+        setSomaFmEnabled(content.radio?.somaFm?.enabled === true);
         const lineIn = cfg.config?.inputs?.lineIn?.inputs ?? [];
         const currentRadio = content.radio?.tuneInUsername ?? '';
         const currentSpotify = content.spotify?.clientId ?? '';
@@ -1862,6 +1865,17 @@ export default function ContentView(): JSX.Element {
       await updateContentConfig({ radio: { radioParadise: { enabled } } });
     } catch (err) {
       setRadioParadiseEnabled(previous);
+      pushAlert({ type: 'error', message: err instanceof Error ? err.message : t('content.radio.feedback.saveFailed') });
+    }
+  };
+
+  const handleToggleSomaFm = async (enabled: boolean): Promise<void> => {
+    const previous = somaFmEnabled;
+    setSomaFmEnabled(enabled);
+    try {
+      await updateContentConfig({ radio: { somaFm: { enabled } } });
+    } catch (err) {
+      setSomaFmEnabled(previous);
       pushAlert({ type: 'error', message: err instanceof Error ? err.message : t('content.radio.feedback.saveFailed') });
     }
   };
@@ -2820,12 +2834,19 @@ export default function ContentView(): JSX.Element {
                   <strong>{t('content.radio.summary.radioParadise')}</strong> · {radioParadiseEnabled ? t('content.radio.summary.on') : t('content.radio.summary.off')}
                 </span>
               </div>
+              <div className="library-summary__row">
+                <span className={`library-summary__dot${somaFmEnabled ? '' : ' is-off'}`} />
+                <span className="library-summary__label">
+                  <strong>{t('content.radio.summary.somafm')}</strong> · {somaFmEnabled ? t('content.radio.summary.on') : t('content.radio.summary.off')}
+                </span>
+              </div>
               <div className="library-summary__foot">
                 {t('content.radio.summary.active', {
                   count: [
                     radioValidationStatus === 'valid' && (radioPresetCount ?? 0) > 0,
                     customRadios.length > 0,
                     radioParadiseEnabled,
+                    somaFmEnabled,
                   ].filter(Boolean).length,
                 })}
               </div>
@@ -2880,6 +2901,23 @@ export default function ContentView(): JSX.Element {
                         type="button"
                         className="content-btn content-btn--danger"
                         onClick={() => void handleToggleRadioParadise(false)}
+                      >
+                        {t('content.custom.remove')}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                {somaFmEnabled ? (
+                  <div className="content-list-row">
+                    <div className="content-list-row__main">
+                      <div className="content-list-row__title">{t('content.radio.somafm.title')}</div>
+                      <div className="content-list-row__meta">{t('content.radio.providers.radioBadge')}</div>
+                    </div>
+                    <div className="content-list-row__actions">
+                      <button
+                        type="button"
+                        className="content-btn content-btn--danger"
+                        onClick={() => void handleToggleSomaFm(false)}
                       >
                         {t('content.custom.remove')}
                       </button>
@@ -3906,6 +3944,18 @@ export default function ContentView(): JSX.Element {
               >
                 <span className="bridge-modal__provider-icon" aria-hidden="true"><span>R</span></span>
                 <span className="bridge-modal__provider-name">{t('content.radio.radioParadise.title')}</span>
+              </button>
+              <button
+                type="button"
+                className="bridge-modal__provider-tile"
+                disabled={somaFmEnabled}
+                onClick={() => {
+                  setRadioPickerOpen(false);
+                  void handleToggleSomaFm(true);
+                }}
+              >
+                <span className="bridge-modal__provider-icon" aria-hidden="true"><span>S</span></span>
+                <span className="bridge-modal__provider-name">{t('content.radio.somafm.title')}</span>
               </button>
             </div>
           </div>

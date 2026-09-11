@@ -74,10 +74,10 @@
     },
     "radio": {
       "title": "Radio",
-      "desc": "TuneIn liefert den Radiokatalog — mit einem TuneIn-Benutzernamen werden persönliche Presets verfügbar, die Suche durchsucht TuneIn komplett. Eigene Streams sind ebenfalls möglich.",
+      "desc": "Radio kommt von den Anbietern, die Sie hier verbinden. TuneIn zeigt die Favoriten Ihres Kontos; Radio Paradise und SomaFM bringen eigene Kanäle mit. Jeden Stream, der dort fehlt, fügen Sie selbst hinzu.",
       "providers": {
         "title": "Radio-Provider",
-        "desc": "Radio-Provider wie Streaming-Dienste verbinden. TuneIn zeigt deine Presets; Radio Paradise fügt kuratierte, hörerfinanzierte Streams hinzu.",
+        "desc": "Radioanbieter genauso einbinden wie Streamingdienste. TuneIn zeigt Ihre Favoriten; Radio Paradise und SomaFM liefern kuratierte, hörerfinanzierte Kanäle.",
         "add": "+ Radio-Provider hinzufügen",
         "radioBadge": "Radio",
         "pickerEyebrow": "Neuer Radio-Provider",
@@ -94,6 +94,7 @@
         "streams_other": "{{count}} Streams",
         "none": "keine",
         "radioParadise": "Radio Paradise",
+        "somafm": "SomaFM",
         "on": "an",
         "off": "aus",
         "active": "{{count}} Quellen aktiv"
@@ -113,6 +114,10 @@
         "desc": "Kuratierte, hochwertige Radiostreams. In der Loxone-App unter den Radioquellen verfügbar.",
         "enabled": "Aktiviert",
         "disabled": "Deaktiviert"
+      },
+      "somafm": {
+        "title": "SomaFM",
+        "desc": "Sechsundvierzig hörerfinanzierte, werbefreie Kanäle aus San Francisco. Ohne Konto nutzbar."
       },
       "custom": {
         "title": "Eigene Streams",

@@ -74,10 +74,10 @@
     },
     "radio": {
       "title": "Radio",
-      "desc": "TuneIn powers the radio catalog — adding a TuneIn username exposes your personal presets, while search scans the full TuneIn service. Custom streams are also supported.",
+      "desc": "Radio comes from the providers you connect here. TuneIn surfaces the presets on your account; Radio Paradise and SomaFM bring their own channels. Any stream not covered by those you can add yourself.",
       "providers": {
         "title": "Radio providers",
-        "desc": "Connect radio providers the same way as streaming services. TuneIn surfaces your presets; Radio Paradise adds curated, listener-supported streams.",
+        "desc": "Connect radio providers the same way as streaming services. TuneIn surfaces your presets; Radio Paradise and SomaFM add curated, listener-supported channels.",
         "add": "+ Add radio provider",
         "radioBadge": "Radio",
         "pickerEyebrow": "New radio provider",
@@ -94,6 +94,7 @@
         "streams_other": "{{count}} streams",
         "none": "none",
         "radioParadise": "Radio Paradise",
+        "somafm": "SomaFM",
         "on": "on",
         "off": "off",
         "active": "{{count}} sources active"
@@ -113,6 +114,10 @@
         "desc": "Curated, high-quality radio streams. Available in the Loxone app under radio sources.",
         "enabled": "Enabled",
         "disabled": "Disabled"
+      },
+      "somafm": {
+        "title": "SomaFM",
+        "desc": "Forty-six listener-supported, commercial-free channels from San Francisco. No account needed."
       },
       "custom": {
         "title": "Custom streams",
