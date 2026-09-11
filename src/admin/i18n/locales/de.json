@@ -125,6 +125,22 @@
         "configured_one": "{{count}} Stream konfiguriert",
         "configured_other": "{{count}} Streams konfiguriert",
         "add": "+ Eigenen Stream hinzufügen",
+        "find": {
+          "label": "Sender suchen",
+          "placeholder": "z. B. BBC Radio 1, Groove Salad, NPO Radio 2",
+          "search": "Suchen",
+          "searching": "Wird gesucht …",
+          "help": "Durchsucht ein öffentliches Senderverzeichnis, das Hörer selbst pflegen. Wählen Sie einen Sender aus, um die Felder unten zu füllen — ändern können Sie danach alles, oder Sie tragen die Stream-Adresse gleich selbst ein.",
+          "use": "Übernehmen",
+          "listen": "Anhören",
+          "stop": "Stopp",
+          "opening": "Wird geöffnet …",
+          "votes_one": "{{count}} Stimme",
+          "votes_other": "{{count, number}} Stimmen",
+          "none": "Keine Sender für „{{query}}“ gefunden. Versuchen Sie einen kürzeren Namen, oder tragen Sie die Stream-Adresse selbst ein.",
+          "unreachable": "Das Senderverzeichnis war nicht erreichbar. Sie können den Sender weiterhin über seine Stream-Adresse hinzufügen.",
+          "previewFailed": "Dieser Sender ließ sich nicht abspielen. Möglicherweise sendet er nicht mehr, oder seine Adresse hat sich geändert."
+        },
         "form": {
           "eyebrow": "Neuer eigener Stream",
           "title": "Stream hinzufügen",

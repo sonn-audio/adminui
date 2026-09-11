@@ -1,0 +1,123 @@
+/* Searching the public index from inside the form that a stream url is typed into. */
+.radio-find {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.radio-find__bar {
+  display: flex;
+  gap: 8px;
+  align-items: stretch;
+}
+
+.radio-find__bar .inline-form__input {
+  flex: 1;
+  min-width: 0;
+}
+
+.radio-find__results {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  /* Long enough to compare, short enough that the form's own fields stay in view. */
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.radio-find__row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.radio-find__art {
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+  border-radius: 6px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.radio-find__art img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.radio-find__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.radio-find__name {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.radio-find__meta {
+  font-size: 11px;
+  color: var(--text-dim);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Square, so a row of results reads as a list of stations and not a row of labels. */
+.radio-find__listen.is-compact {
+  padding: 8px 10px;
+  flex-shrink: 0;
+}
+
+.radio-find__use {
+  flex-shrink: 0;
+}
+
+.radio-find__error {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--danger);
+}
+
+.radio-find__empty {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+@media (max-width: 620px) {
+  .radio-find__bar {
+    flex-wrap: wrap;
+  }
+
+  /* The name and what it is are worth the width; the buttons wrap under them. */
+  .radio-find__row {
+    flex-wrap: wrap;
+  }
+
+  .radio-find__text {
+    flex-basis: 100%;
+    order: -1;
+  }
+}

@@ -1,4 +1,4 @@
-import { API_BASE } from '../config/apiConfig';
+import { API_BASE, isRemoteBase } from '../config/apiConfig';
 import type { TtsConfig } from '../types/config';
 import { requestJson, requestOk } from './http';
 
@@ -409,6 +409,22 @@ export type CustomRadioEntry = {
   name: string;
   stream: string;
   coverurl?: string;
+  /** Present when the station was picked from the index rather than typed in by hand. */
+  source?: { provider: 'radiobrowser'; stationId: string };
+};
+
+/** A station the index offered, in the shape the form fills itself from. */
+export type RadioStationHit = {
+  id: string;
+  name: string;
+  stream: string;
+  coverurl?: string;
+  country?: string;
+  countryCode?: string;
+  language?: string;
+  codec?: string;
+  bitrate?: number;
+  votes: number;
 };
 
 type CustomRadioListResponse = {
@@ -421,10 +437,40 @@ export async function fetchCustomRadioStations(): Promise<CustomRadioListRespons
   });
 }
 
+export async function searchRadioStations(query: string, limit = 25): Promise<RadioStationHit[]> {
+  const data = await requestJson<{ stations?: RadioStationHit[] }>(
+    `${API_BASE}/content/radio/search?q=${encodeURIComponent(query)}&limit=${limit}`,
+    { errorMessage: 'Station search failed', includeBodyInError: false },
+  );
+  return data.stations ?? [];
+}
+
+/**
+ * Source url for an `<audio>` element that plays a stream through the server.
+ *
+ * A media element cannot carry headers, so this only authenticates where the session
+ * cookie travels with it: the same origin. See {@link canPreviewRadioStream}.
+ */
+export function radioPreviewSrc(streamUrl: string): string {
+  return `${API_BASE}/content/radio/preview?url=${encodeURIComponent(streamUrl)}`;
+}
+
+/**
+ * Whether previewing can work against the server the UI is currently pointed at.
+ *
+ * False while browsing a *peer* audioserver: that is cross-origin, so the cookie is not
+ * sent and a bearer token cannot be attached to an `<audio src>`. The button is hidden
+ * rather than left to fail.
+ */
+export function canPreviewRadioStream(): boolean {
+  return !isRemoteBase();
+}
+
 export async function createCustomRadioStation(payload: {
   name: string;
   stream: string;
   coverurl?: string;
+  source?: { provider: 'radiobrowser'; stationId: string };
 }): Promise<CustomRadioEntry> {
   const data = await requestJson<{ station: CustomRadioEntry }>(`${API_BASE}/content/radio/custom`, {
     method: 'POST',

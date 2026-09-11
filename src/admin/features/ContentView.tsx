@@ -54,6 +54,7 @@ import { SpotifyPlayers } from '../components/SpotifyPlayers';
 import { SpotifyAccountRow } from '../components/SpotifyAccountRow';
 import { useSoloistAccounts } from '../hooks/useSoloistAccounts';
 import { InlineForm, InlineFormField } from '../components/InlineForm';
+import RadioStationFinder, { PreviewButton, useStreamPreview } from './content/RadioStationFinder';
 import LibraryBrowser from './content/LibraryBrowser';
 import SubTabs from '../components/SubTabs';
 import { SubPanel, useSubPanelTransition } from '../components/SubPanel';
@@ -121,6 +122,11 @@ type CustomRadioFormState = {
   name: string;
   stream: string;
   coverurl: string;
+  /**
+   * Set only while the form still holds the station that was picked from the index.
+   * Editing the url by hand clears it: what is saved then is nobody's index entry.
+   */
+  source?: { provider: 'radiobrowser'; stationId: string };
 };
 
 type BridgeFormState = {
@@ -1086,6 +1092,7 @@ export default function ContentView(): JSX.Element {
     null,
   );
   const [customRadioForm, setCustomRadioForm] = React.useState<CustomRadioFormState>(() => createEmptyCustomRadioForm());
+  const streamPreview = useStreamPreview();
   const [customRadioModalOpen, setCustomRadioModalOpen] = React.useState(false);
   const [contentFilter, setContentFilter] = React.useState<ContentFilterKey>(() => {
     if (typeof window === 'undefined') return 'radio';
@@ -1678,6 +1685,7 @@ export default function ContentView(): JSX.Element {
 
   const closeCustomRadioModal = (resetFeedback = true): void => {
     setCustomRadioModalOpen(false);
+    streamPreview.stop();
     if (resetFeedback) {
       setCustomRadioFeedback(null);
     }
@@ -2221,6 +2229,7 @@ export default function ContentView(): JSX.Element {
         name: customRadioForm.name.trim(),
         stream: customRadioForm.stream.trim(),
         coverurl: customRadioForm.coverurl.trim() || undefined,
+        ...(customRadioForm.source ? { source: customRadioForm.source } : {}),
       });
       setCustomRadios((prev) => [...prev, station]);
       setCustomRadioFeedback({ type: 'success', message: 'Station added' });
@@ -2948,6 +2957,17 @@ export default function ContentView(): JSX.Element {
                 onCancel={() => closeCustomRadioModal()}
                 onSubmit={() => void handleCustomRadioAdd()}
               >
+                <RadioStationFinder
+                  preview={streamPreview}
+                  onPick={(hit) => {
+                    setCustomRadioForm({
+                      name: hit.name,
+                      stream: hit.stream,
+                      coverurl: hit.coverurl ?? '',
+                      source: { provider: 'radiobrowser', stationId: hit.id },
+                    });
+                  }}
+                />
                 <InlineFormField label={t('content.radio.custom.form.nameLabel')}>
                   <input
                     className="inline-form__input"
@@ -2957,22 +2977,30 @@ export default function ContentView(): JSX.Element {
                     onChange={(event) =>
                       setCustomRadioForm((prev) => ({ ...prev, name: event.target.value }))
                     }
-                    autoFocus
                   />
                 </InlineFormField>
                 <InlineFormField
                   label={t('content.radio.custom.form.streamLabel')}
                   help={t('content.radio.custom.form.streamHelp')}
                 >
-                  <input
-                    className="inline-form__input is-mono"
-                    type="url"
-                    placeholder={t('content.radio.custom.form.streamPlaceholder')}
-                    value={customRadioForm.stream}
-                    onChange={(event) =>
-                      setCustomRadioForm((prev) => ({ ...prev, stream: event.target.value }))
-                    }
-                  />
+                  <div className="radio-find__bar">
+                    <input
+                      className="inline-form__input is-mono"
+                      type="url"
+                      placeholder={t('content.radio.custom.form.streamPlaceholder')}
+                      value={customRadioForm.stream}
+                      onChange={(event) =>
+                        setCustomRadioForm((prev) => ({
+                          ...prev,
+                          stream: event.target.value,
+                          // Typed over by hand: this is no longer the index's entry, so it
+                          // must not be saved or reported as one.
+                          source: undefined,
+                        }))
+                      }
+                    />
+                    <PreviewButton url={customRadioForm.stream} preview={streamPreview} />
+                  </div>
                 </InlineFormField>
                 <InlineFormField label={t('content.radio.custom.form.coverLabel')} optional>
                   <input

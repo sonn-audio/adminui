@@ -125,6 +125,22 @@
         "configured_one": "{{count}} stream configured",
         "configured_other": "{{count}} streams configured",
         "add": "+ Add custom stream",
+        "find": {
+          "label": "Find a station",
+          "placeholder": "e.g. BBC Radio 1, Groove Salad, NPO Radio 2",
+          "search": "Search",
+          "searching": "Searching…",
+          "help": "Searches a public station directory that listeners maintain themselves. Pick one to fill in the fields below — you can still change anything, or skip this and enter a stream address yourself.",
+          "use": "Use",
+          "listen": "Listen",
+          "stop": "Stop",
+          "opening": "Opening…",
+          "votes_one": "{{count}} vote",
+          "votes_other": "{{count, number}} votes",
+          "none": "No stations found for “{{query}}”. Try a shorter name, or enter the stream address yourself.",
+          "unreachable": "The station directory could not be reached. You can still add a station by entering its stream address.",
+          "previewFailed": "That station did not play. It may be off the air, or its address may have changed."
+        },
         "form": {
           "eyebrow": "New custom stream",
           "title": "Add a stream",
