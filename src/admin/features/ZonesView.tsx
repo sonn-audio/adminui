@@ -3030,22 +3030,27 @@ function ZoneOutputEditor({
     }
   }
 
+  /**
+   * Picking a speaker answers which device, and nothing else.
+   *
+   * It used to replace every field value with the three it knows, so choosing a
+   * speaker silently reset the sound quality to its default — invisible while the
+   * form was a wall of text boxes, obvious now that quality is one of the two
+   * things the panel asks. Merge instead, and let `persist` write whatever the
+   * definition says the output has.
+   */
   function applySonosDevice(device: SonosDevice): void {
     if (!selectedId) {
       setSelectedId('sonos');
     }
-    const payload: ZoneTransportConfig = {
-      id: 'sonos',
-      host: device.host,
-      deviceName: device.name ?? device.roomName ?? '',
-      householdId: device.householdId,
-    };
-    setFieldValues({
+    const next = {
+      ...fieldValues,
       host: device.host,
       deviceName: device.name ?? device.roomName ?? '',
       householdId: device.householdId ?? '',
-    });
-    onChange(payload);
+    };
+    setFieldValues(next);
+    persist('sonos', next);
   }
 
   async function handleDlnaDiscovery(host?: string): Promise<void> {
