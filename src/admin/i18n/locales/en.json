@@ -107,7 +107,13 @@
         "save": "Save",
         "saving": "Saving…",
         "presetsFound_one": "{{count}} preset found",
-        "presetsFound_other": "{{count}} presets found"
+        "presetsFound_other": "{{count}} presets found",
+        "check": "Check",
+        "checking": "Checking…",
+        "checkHint": "Check this username to see which stations it has.",
+        "presetsTitle": "Stations on this account",
+        "presetsNote": "These come from your TuneIn account. Add or reorder them in the TuneIn app or on tunein.com, then check again here.",
+        "kbps": "{{count}} kbps"
       },
       "radioParadise": {
         "title": "Radio Paradise",

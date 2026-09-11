@@ -21,6 +21,7 @@ import {
   createCustomRadioStation,
   deleteCustomRadioStation,
   validateTuneInUsername,
+  type TuneInPreset,
   createSpotifyBridge,
   deleteSpotifyBridge,
   updateInputsConfig,
@@ -615,6 +616,13 @@ type RadioState = {
   saving: boolean;
   feedback: FeedbackMessage | null;
   presetCount: number | null;
+  /** What the username actually resolves to — the answer the count only summarises. */
+  presets: TuneInPreset[];
+  /**
+   * The username the answer on screen is about — the presets and the message alike.
+   * A field typed past it has not been checked yet, and neither belongs to it.
+   */
+  checkedFor: string;
   validationMessage: string | null;
   validationStatus: 'idle' | 'checking' | 'valid' | 'invalid' | 'error';
 };
@@ -630,6 +638,8 @@ const initialRadioState: RadioState = {
   saving: false,
   feedback: null,
   presetCount: null,
+  presets: [],
+  checkedFor: '',
   validationMessage: null,
   validationStatus: 'idle',
 };
@@ -957,6 +967,8 @@ export default function ContentView(): JSX.Element {
     saving: radioSaving,
     feedback: radioFeedback,
     presetCount: radioPresetCount,
+    presets: radioPresets,
+    checkedFor: radioCheckedFor,
     validationMessage: radioValidationMessage,
     validationStatus: radioValidationStatus,
   } = radioState;
@@ -1228,6 +1240,8 @@ export default function ContentView(): JSX.Element {
       if (!trimmed) {
         setRadioState({
           presetCount: null,
+          presets: [],
+          checkedFor: '',
           validationMessage: null,
           validationStatus: 'idle',
         });
@@ -1240,9 +1254,12 @@ export default function ContentView(): JSX.Element {
       try {
         const result = await validateTuneInUsername(trimmed);
         if (result.valid) {
+          const presets = Array.isArray(result.presets) ? result.presets : [];
           const count = Number.isFinite(result.presetCount) ? Number(result.presetCount) : null;
           setRadioState({
             presetCount: count,
+            presets,
+            checkedFor: trimmed,
             validationStatus: 'valid',
           });
           const message =
@@ -1256,14 +1273,20 @@ export default function ContentView(): JSX.Element {
         }
         setRadioState({
           presetCount: null,
+          presets: [],
+          // Set even though nothing was found: "not found" is still an answer about this
+          // name, and belongs on screen only while that name is in the field.
+          checkedFor: trimmed,
           validationStatus: 'invalid',
         });
         const message = result.message ?? t('content.radio.validation.notFoundMessage');
         setRadioState({ validationMessage: message });
         return { ok: false, message };
-      } catch (err) {
+      } catch {
         setRadioState({
           presetCount: null,
+          presets: [],
+          checkedFor: trimmed,
           validationStatus: 'error',
         });
         const message = t('content.radio.validation.verifyError');
@@ -4005,6 +4028,21 @@ export default function ContentView(): JSX.Element {
               />
             </div>
             <div className="source-card__save-row" style={{ marginTop: 16, justifyContent: 'flex-end' }}>
+              {/*
+                Checking without saving: before this the only way to find out what a
+                username was worth was to keep it, which is how a working account and a
+                typo came to look the same (issue #362).
+              */}
+              <button
+                type="button"
+                className="content-btn"
+                onClick={() => void validateTuneIn(radioUsername)}
+                disabled={radioValidationStatus === 'checking' || !radioUsername.trim()}
+              >
+                {radioValidationStatus === 'checking'
+                  ? t('content.radio.tunein.checking')
+                  : t('content.radio.tunein.check')}
+              </button>
               <button
                 type="button"
                 className="content-btn content-btn--primary"
@@ -4017,6 +4055,58 @@ export default function ContentView(): JSX.Element {
                 {radioSaving ? t('content.radio.tunein.saving') : t('content.radio.tunein.save')}
               </button>
             </div>
+
+            {radioValidationMessage && radioUsername.trim() === radioCheckedFor ? (
+              <p
+                className={`tunein-presets__note${
+                  radioValidationStatus === 'invalid' || radioValidationStatus === 'error'
+                    ? ' is-error'
+                    : ''
+                }`}
+              >
+                {radioValidationMessage}
+              </p>
+            ) : null}
+
+            {radioUsername.trim() &&
+            radioUsername.trim() !== radioCheckedFor &&
+            radioValidationStatus !== 'checking' ? (
+              <p className="tunein-presets__note">{t('content.radio.tunein.checkHint')}</p>
+            ) : radioPresets.length > 0 ? (
+              <div className="tunein-presets">
+                <div className="tunein-presets__head">{t('content.radio.tunein.presetsTitle')}</div>
+                <ul className="tunein-presets__list">
+                  {radioPresets.map((preset) => (
+                    <li key={preset.id} className="tunein-preset">
+                      <span className="tunein-preset__art" aria-hidden="true">
+                        {preset.logo ? (
+                          <img
+                            src={preset.logo}
+                            alt=""
+                            loading="lazy"
+                            onError={(event) => {
+                              event.currentTarget.remove();
+                            }}
+                          />
+                        ) : null}
+                      </span>
+                      <span className="tunein-preset__text">
+                        <span className="tunein-preset__name">{preset.name}</span>
+                        {preset.description ? (
+                          <span className="tunein-preset__desc">{preset.description}</span>
+                        ) : null}
+                      </span>
+                      {preset.bitrate ? (
+                        <span className="tunein-preset__meta">
+                          {t('content.radio.tunein.kbps', { count: preset.bitrate })}
+                        </span>
+                      ) : null}
+                    </li>
+                  ))}
+                </ul>
+                <p className="tunein-presets__note">{t('content.radio.tunein.presetsNote')}</p>
+              </div>
+            ) : null}
           </div>
         </Modal>
       )}

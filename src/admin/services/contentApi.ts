@@ -489,9 +489,20 @@ export async function deleteCustomRadioStation(id: string): Promise<void> {
   });
 }
 
+/** One preset of a TuneIn account, described from the listing it came in. */
+export type TuneInPreset = {
+  id: string;
+  name: string;
+  description?: string;
+  logo?: string;
+  bitrate?: number;
+  formats?: string;
+};
+
 export type TuneInValidationResponse = {
   valid: boolean;
   presetCount?: number;
+  presets?: TuneInPreset[];
   error?: string;
   message?: string;
 };
