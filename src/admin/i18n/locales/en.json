@@ -1320,6 +1320,7 @@
       "callbackHelp": "Point this at your LoxBerry host. Leave blank to keep the provider selected without forwarding — the chip on the tile turns amber to signal a missing URL."
     },
     "output": {
+      "advanced": "Advanced",
       "type": "Output type",
       "typeDesc": "Pick where this zone should play.",
       "selectTypePlaceholder": "Choose an output type…",

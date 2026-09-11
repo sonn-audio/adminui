@@ -1320,6 +1320,7 @@
       "callbackHelp": "Auf den LoxBerry-Host zeigen lassen. Leer lassen, um den Anbieter ohne Weiterleitung gewählt zu halten — der Chip auf der Kachel wird gelb, um eine fehlende URL anzuzeigen."
     },
     "output": {
+      "advanced": "Erweitert",
       "type": "Ausgangstyp",
       "typeDesc": "Festlegen, wo diese Zone abspielen soll.",
       "selectTypePlaceholder": "Ausgangstyp wählen…",

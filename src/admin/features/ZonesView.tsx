@@ -62,7 +62,7 @@ import type {
   ZoneStateConfig,
   ZoneTransportConfig,
 } from '@/domain/config/types';
-import type { TransportConfigDefinition } from '@/ports/OutputsTypes';
+import type { TransportConfigDefinition, TransportFieldDefinition } from '@/ports/OutputsTypes';
 import type { SpotifyAccountConfig } from '@/domain/config/types';
 
 interface Zone {
@@ -2346,6 +2346,7 @@ function ZoneOutputEditor({
   );
   const [discoveringSqueezelite, setDiscoveringSqueezelite] = React.useState(false);
   const [squeezeliteError, setSqueezeliteError] = React.useState<string | null>(null);
+  const [outputAdvancedOpen, setOutputAdvancedOpen] = React.useState(false);
   const [sonosDevices, setSonosDevices] = React.useState<SonosDevice[] | null>(null);
   const [discoveringSonos, setDiscoveringSonos] = React.useState(false);
   const [sonosError, setSonosError] = React.useState<string | null>(null);
@@ -2664,6 +2665,7 @@ function ZoneOutputEditor({
 
   function handleModuleSelect(nextId: string): void {
     setDeviceQuery('');
+    setOutputAdvancedOpen(false);
     setSelectedId(nextId);
     const nextValues = nextId === '' ? {} : extractDefaultFieldValues(nextId, definitionMap);
     setFieldValues(nextValues);
@@ -2731,6 +2733,27 @@ function ZoneOutputEditor({
     setFieldValues((prev) => ({ ...prev, [fieldId]: value }));
   }
 
+  /**
+   * Write a field straight through, for controls with no blur to wait for.
+   *
+   * A toggle is done the moment it is clicked, and `handleFieldBlur` reads the
+   * field values off the render it was created in — so after `setFieldValues` it
+   * would still persist the old ones. Carry the next values by hand instead.
+   */
+  function commitFieldValue(fieldId: string, value: string): void {
+    const next = { ...fieldValues, [fieldId]: value };
+    setFieldValues(next);
+    if (!selectedId) {
+      onChange(null);
+      return;
+    }
+    if (selectedId === 'squeezelite') {
+      persistSqueezelite(next);
+      return;
+    }
+    persist(selectedId, next);
+  }
+
   function handleFieldBlur(): void {
     if (!selectedId) {
       onChange(null);
@@ -2748,6 +2771,61 @@ function ZoneOutputEditor({
       return;
     }
     persist(selectedId, fieldValues);
+  }
+
+  /**
+   * One setting, drawn as what it is.
+   *
+   * Every output field used to be a text box, which is how a yes/no setting became
+   * something you type the word `true` into. The definition now says what the value
+   * is and the control follows; the stored value stays a string, so nothing already
+   * in config.json has to change.
+   */
+  function renderOutputField(field: TransportFieldDefinition) {
+    if (field.type === 'boolean') {
+      const on = isTruthyFieldValue(fieldValues[field.id]);
+      return (
+        <div key={field.id} className="zone-output-field zone-output-field--toggle">
+          <div className="inline-form__toggle-row">
+            <button
+              type="button"
+              className={`inline-form__toggle${on ? ' is-on' : ''}`}
+              aria-label={field.label}
+              aria-pressed={on}
+              disabled={saving}
+              onClick={() => commitFieldValue(field.id, on ? 'false' : 'true')}
+            />
+            <div className="inline-form__toggle-text">
+              <span className="inline-form__toggle-title">{field.label}</span>
+              {field.description && (
+                <span className="inline-form__toggle-sub">{field.description}</span>
+              )}
+            </div>
+          </div>
+        </div>
+      );
+    }
+    return (
+      <label key={field.id} className="zone-output-field">
+        <span>{field.label}</span>
+        <input
+          type={field.type === 'number' ? 'number' : 'text'}
+          inputMode={field.type === 'number' ? 'numeric' : undefined}
+          value={fieldValues[field.id] ?? ''}
+          onChange={(event) => handleFieldChange(field.id, event.target.value)}
+          onBlur={handleFieldBlur}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              handleFieldBlur();
+            }
+          }}
+          placeholder={field.placeholder}
+          disabled={saving}
+        />
+        {field.description && <p className="zone-output-help">{field.description}</p>}
+      </label>
+    );
   }
 
   async function handleAirplayDiscovery(): Promise<void> {
@@ -3556,26 +3634,41 @@ function ZoneOutputEditor({
             !isDlna &&
             !isMusicAssistant && (
             <div className="zone-output-fields">
-              {selectedDefinition.fields.map((field) => (
-                <label key={field.id} className="zone-output-field">
-                  <span>{field.label}</span>
-                  <input
-                    type="text"
-                    value={fieldValues[field.id] ?? ''}
-                    onChange={(event) => handleFieldChange(field.id, event.target.value)}
-                    onBlur={handleFieldBlur}
-                    onKeyDown={(event) => {
-                      if (event.key === 'Enter') {
-                        event.preventDefault();
-                        handleFieldBlur();
-                      }
-                    }}
-                    placeholder={field.placeholder}
-                    disabled={saving}
-                  />
-                  {field.description && <p className="zone-output-help">{field.description}</p>}
-                </label>
-              ))}
+              {selectedDefinition.fields
+                .filter((field) => !field.advanced)
+                .map((field) => renderOutputField(field))}
+              {selectedDefinition.fields.some((field) => field.advanced) && (
+                <>
+                  <button
+                    type="button"
+                    className={`inline-form__adv-toggle${outputAdvancedOpen ? ' is-open' : ''}`}
+                    onClick={() => setOutputAdvancedOpen((open) => !open)}
+                  >
+                    <svg
+                      width="9"
+                      height="9"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="3"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    >
+                      <polyline points="9 18 15 12 9 6" />
+                    </svg>
+                    {t('zones.output.advanced')}
+                  </button>
+                  <div className={`inline-form__adv-panel${outputAdvancedOpen ? ' is-open' : ''}`}>
+                    <div className="inline-form__adv-inner">
+                      <div className="zone-output-fields">
+                        {selectedDefinition.fields
+                          .filter((field) => field.advanced)
+                          .map((field) => renderOutputField(field))}
+                      </div>
+                    </div>
+                  </div>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -6118,6 +6211,11 @@ function extractTransportFields(config: ZoneTransportConfig | null): Record<stri
     }
     return acc;
   }, {});
+}
+
+/** Boolean fields are stored as text, the way every other field is. */
+function isTruthyFieldValue(value: string | undefined): boolean {
+  return ['true', '1', 'yes', 'on'].includes((value ?? '').trim().toLowerCase());
 }
 
 function extractDefaultFieldValues(
