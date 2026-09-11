@@ -3420,3 +3420,38 @@
 .bridge-modal__panel .content-toggle-card {
   margin-top: 18px;
 }
+
+/* ---- Custom streams, opened from their row in the radio provider list ---- */
+
+/*
+ * Set in from the rows above it so what belongs to custom streams reads as theirs,
+ * rather than as three more providers appearing when the row is opened.
+ */
+.radio-custom-panel {
+  margin: 10px 0 0 14px;
+  padding: 12px 0 0 14px;
+  border-left: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.radio-custom-panel__desc {
+  margin: 0;
+  font-size: 11px;
+  line-height: 1.5;
+  color: var(--text-dim);
+}
+
+.radio-custom-panel__foot {
+  display: flex;
+  justify-content: flex-end;
+}
+
+@media (max-width: 620px) {
+  /* The indent costs more than it explains once the rows themselves wrap. */
+  .radio-custom-panel {
+    margin-left: 0;
+    padding-left: 10px;
+  }
+}

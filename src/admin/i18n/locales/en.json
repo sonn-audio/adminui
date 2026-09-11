@@ -80,8 +80,6 @@
         "desc": "Connect radio providers the same way as streaming services. TuneIn surfaces your presets; Radio Paradise adds curated, listener-supported streams.",
         "add": "+ Add radio provider",
         "radioBadge": "Radio",
-        "emptyTitle": "No radio providers yet",
-        "emptySub": "Add TuneIn or Radio Paradise.",
         "pickerEyebrow": "New radio provider",
         "pickerTitle": "Add a radio provider",
         "pickerSubtitle": "Pick a radio provider to connect"
@@ -122,8 +120,11 @@
         "emptyTitle": "No custom streams yet",
         "emptySub": "Add one to make it available in Loxone.",
         "remove": "Remove",
-        "configured_one": "{{count}} stream configured",
-        "configured_other": "{{count}} streams configured",
+        "manage": "Manage",
+        "hide": "Hide",
+        "rowMeta_one": "{{count}} stream",
+        "rowMeta_other": "{{count}} streams",
+        "rowMetaEmpty": "None yet",
         "add": "+ Add custom stream",
         "find": {
           "label": "Find a station",

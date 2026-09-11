@@ -1094,6 +1094,14 @@ export default function ContentView(): JSX.Element {
   const [customRadioForm, setCustomRadioForm] = React.useState<CustomRadioFormState>(() => createEmptyCustomRadioForm());
   const streamPreview = useStreamPreview();
   const [customRadioModalOpen, setCustomRadioModalOpen] = React.useState(false);
+  /**
+   * Whether the custom-stream list is open under its row.
+   *
+   * Custom streams sit in the provider list as a peer of TuneIn and Radio Paradise, which is
+   * what the browse tree has always shown. But unlike those it holds content of its own, so
+   * the row reveals it here instead of being a line that goes nowhere.
+   */
+  const [customRadioExpanded, setCustomRadioExpanded] = React.useState(false);
   const [contentFilter, setContentFilter] = React.useState<ContentFilterKey>(() => {
     if (typeof window === 'undefined') return 'radio';
     const stored = window.localStorage.getItem('admin-content-filter');
@@ -1679,6 +1687,7 @@ export default function ContentView(): JSX.Element {
   };
 
   const openCustomRadioModal = (): void => {
+    setCustomRadioExpanded(true);
     setCustomRadioModalOpen(true);
     setCustomRadioFeedback(null);
   };
@@ -2831,189 +2840,199 @@ export default function ContentView(): JSX.Element {
                   <p className="source-card__desc">{t('content.radio.providers.desc')}</p>
                 </div>
               </div>
-              {radioUsername.trim() || radioParadiseEnabled ? (
-                <div className="content-list">
-                  {radioUsername.trim() ? (
-                    <div className="content-list-row">
-                      <div className="content-list-row__main">
-                        <div className="content-list-row__title">{t('content.radio.tunein.title')}</div>
-                        <div className="content-list-row__meta">
-                          {(radioPresetCount ?? 0) > 0
-                            ? t('content.radio.summary.presets', { count: radioPresetCount ?? 0 })
-                            : radioUsername}
-                        </div>
-                      </div>
-                      <div className="content-list-row__actions">
-                        <button
-                          type="button"
-                          className="content-btn"
-                          onClick={() => setTuneInModalOpen(true)}
-                        >
-                          {t('content.custom.edit')}
-                        </button>
-                        <button
-                          type="button"
-                          className="content-btn content-btn--danger"
-                          onClick={() => void handleRemoveTuneIn()}
-                        >
-                          {t('content.custom.remove')}
-                        </button>
+              <div className="content-list">
+                {radioUsername.trim() ? (
+                  <div className="content-list-row">
+                    <div className="content-list-row__main">
+                      <div className="content-list-row__title">{t('content.radio.tunein.title')}</div>
+                      <div className="content-list-row__meta">
+                        {(radioPresetCount ?? 0) > 0
+                          ? t('content.radio.summary.presets', { count: radioPresetCount ?? 0 })
+                          : radioUsername}
                       </div>
                     </div>
-                  ) : null}
-                  {radioParadiseEnabled ? (
-                    <div className="content-list-row">
-                      <div className="content-list-row__main">
-                        <div className="content-list-row__title">{t('content.radio.radioParadise.title')}</div>
-                        <div className="content-list-row__meta">{t('content.radio.providers.radioBadge')}</div>
-                      </div>
-                      <div className="content-list-row__actions">
-                        <button
-                          type="button"
-                          className="content-btn content-btn--danger"
-                          onClick={() => void handleToggleRadioParadise(false)}
-                        >
-                          {t('content.custom.remove')}
-                        </button>
-                      </div>
+                    <div className="content-list-row__actions">
+                      <button
+                        type="button"
+                        className="content-btn"
+                        onClick={() => setTuneInModalOpen(true)}
+                      >
+                        {t('content.custom.edit')}
+                      </button>
+                      <button
+                        type="button"
+                        className="content-btn content-btn--danger"
+                        onClick={() => void handleRemoveTuneIn()}
+                      >
+                        {t('content.custom.remove')}
+                      </button>
                     </div>
-                  ) : null}
-                </div>
-              ) : (
-                <div className="content-empty-info">
-                  <span className="content-empty-info__icon">i</span>
-                  <div className="content-empty-info__text">
-                    <div className="content-empty-info__title">{t('content.radio.providers.emptyTitle')}</div>
-                    <div className="content-empty-info__sub">{t('content.radio.providers.emptySub')}</div>
+                  </div>
+                ) : null}
+                {radioParadiseEnabled ? (
+                  <div className="content-list-row">
+                    <div className="content-list-row__main">
+                      <div className="content-list-row__title">{t('content.radio.radioParadise.title')}</div>
+                      <div className="content-list-row__meta">{t('content.radio.providers.radioBadge')}</div>
+                    </div>
+                    <div className="content-list-row__actions">
+                      <button
+                        type="button"
+                        className="content-btn content-btn--danger"
+                        onClick={() => void handleToggleRadioParadise(false)}
+                      >
+                        {t('content.custom.remove')}
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+                <div className="content-list-row">
+                  <div className="content-list-row__main">
+                    <div className="content-list-row__title">{t('content.radio.custom.title')}</div>
+                    <div className="content-list-row__meta">
+                      {customRadios.length > 0
+                        ? t('content.radio.custom.rowMeta', { count: customRadios.length })
+                        : t('content.radio.custom.rowMetaEmpty')}
+                    </div>
+                  </div>
+                  <div className="content-list-row__actions">
+                    {/*
+                      One action, not two: unlike the rows above it there is no connection
+                      here to break — custom streams are always available, so a Remove
+                      beside them could only mean "delete everything I added".
+                    */}
+                    <button
+                      type="button"
+                      className="content-btn"
+                      aria-expanded={customRadioExpanded}
+                      onClick={() => {
+                        if (customRadioExpanded) {
+                          closeCustomRadioModal();
+                        }
+                        setCustomRadioExpanded((open) => !open);
+                      }}
+                    >
+                      {customRadioExpanded
+                        ? t('content.radio.custom.hide')
+                        : t('content.radio.custom.manage')}
+                    </button>
                   </div>
                 </div>
-              )}
-            </div>
+              </div>
 
-            <div className="source-card">
-              <div className="source-card__head">
-                <span className="source-card__chip" aria-hidden="true">
-                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 12h16M4 6h10M4 18h7" />
-                    <circle cx="19" cy="18" r="2" />
-                  </svg>
-                </span>
-                <div className="source-card__head-text">
-                  <h3 className="source-card__title">{t('content.radio.custom.title')}</h3>
-                  <p className="source-card__desc">{t('content.radio.custom.desc')}</p>
-                </div>
-              </div>
-              {customRadios.length === 0 ? (
-                <div className="content-empty-info">
-                  <span className="content-empty-info__icon">i</span>
-                  <div className="content-empty-info__text">
-                    <div className="content-empty-info__title">{t('content.radio.custom.emptyTitle')}</div>
-                    <div className="content-empty-info__sub">{t('content.radio.custom.emptySub')}</div>
-                  </div>
-                </div>
-              ) : (
-                <div className="content-list">
-                  {customRadios.map((stream) => (
-                    <div key={stream.id} className="content-list-row">
-                      <div className="content-list-row__main">
-                        <div className="content-list-row__title">{stream.name}</div>
-                        <div className="content-list-row__meta">{stream.stream}</div>
-                      </div>
-                      <div className="content-list-row__actions">
-                        <button
-                          type="button"
-                          className="content-btn content-btn--danger"
-                          onClick={() => void handleCustomRadioDelete(stream.id)}
-                        >
-                          {t('content.radio.custom.remove')}
-                        </button>
+              {customRadioExpanded ? (
+                <div className="radio-custom-panel">
+                  <p className="radio-custom-panel__desc">{t('content.radio.custom.desc')}</p>
+                  {customRadios.length === 0 ? (
+                    <div className="content-empty-info">
+                      <span className="content-empty-info__icon">i</span>
+                      <div className="content-empty-info__text">
+                        <div className="content-empty-info__title">{t('content.radio.custom.emptyTitle')}</div>
+                        <div className="content-empty-info__sub">{t('content.radio.custom.emptySub')}</div>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
-              <div className="source-card__foot-row">
-                <span className="source-card__foot-count">
-                  {t('content.radio.custom.configured', { count: customRadios.length })}
-                </span>
-                <button
-                  type="button"
-                  className="content-btn content-btn--primary"
-                  onClick={openCustomRadioModal}
-                  disabled={customRadioModalOpen}
-                >
-                  {t('content.radio.custom.add')}
-                </button>
-              </div>
-              <InlineForm
-                open={customRadioModalOpen}
-                eyebrow={t('content.radio.custom.form.eyebrow')}
-                title={t('content.radio.custom.form.title')}
-                description={t('content.radio.custom.form.description')}
-                cancelLabel={t('content.radio.custom.form.cancel')}
-                submitLabel={t('content.radio.custom.form.submit')}
-                submitDisabled={!customRadioFormValid}
-                busy={customRadioSubmitting}
-                onCancel={() => closeCustomRadioModal()}
-                onSubmit={() => void handleCustomRadioAdd()}
-              >
-                <RadioStationFinder
-                  preview={streamPreview}
-                  onPick={(hit) => {
-                    setCustomRadioForm({
-                      name: hit.name,
-                      stream: hit.stream,
-                      coverurl: hit.coverurl ?? '',
-                      source: { provider: 'radiobrowser', stationId: hit.id },
-                    });
-                  }}
-                />
-                <InlineFormField label={t('content.radio.custom.form.nameLabel')}>
-                  <input
-                    className="inline-form__input"
-                    type="text"
-                    placeholder={t('content.radio.custom.form.namePlaceholder')}
-                    value={customRadioForm.name}
-                    onChange={(event) =>
-                      setCustomRadioForm((prev) => ({ ...prev, name: event.target.value }))
-                    }
-                  />
-                </InlineFormField>
-                <InlineFormField
-                  label={t('content.radio.custom.form.streamLabel')}
-                  help={t('content.radio.custom.form.streamHelp')}
-                >
-                  <div className="radio-find__bar">
-                    <input
-                      className="inline-form__input is-mono"
-                      type="url"
-                      placeholder={t('content.radio.custom.form.streamPlaceholder')}
-                      value={customRadioForm.stream}
-                      onChange={(event) =>
-                        setCustomRadioForm((prev) => ({
-                          ...prev,
-                          stream: event.target.value,
-                          // Typed over by hand: this is no longer the index's entry, so it
-                          // must not be saved or reported as one.
-                          source: undefined,
-                        }))
-                      }
-                    />
-                    <PreviewButton url={customRadioForm.stream} preview={streamPreview} />
+                  ) : (
+                    <div className="content-list">
+                      {customRadios.map((stream) => (
+                        <div key={stream.id} className="content-list-row">
+                          <div className="content-list-row__main">
+                            <div className="content-list-row__title">{stream.name}</div>
+                            <div className="content-list-row__meta">{stream.stream}</div>
+                          </div>
+                          <div className="content-list-row__actions">
+                            <button
+                              type="button"
+                              className="content-btn content-btn--danger"
+                              onClick={() => void handleCustomRadioDelete(stream.id)}
+                            >
+                              {t('content.radio.custom.remove')}
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className="radio-custom-panel__foot">
+                    <button
+                      type="button"
+                      className="content-btn content-btn--primary"
+                      onClick={openCustomRadioModal}
+                      disabled={customRadioModalOpen}
+                    >
+                      {t('content.radio.custom.add')}
+                    </button>
                   </div>
-                </InlineFormField>
-                <InlineFormField label={t('content.radio.custom.form.coverLabel')} optional>
-                  <input
-                    className="inline-form__input is-mono"
-                    type="url"
-                    placeholder={t('content.radio.custom.form.coverPlaceholder')}
-                    value={customRadioForm.coverurl}
-                    onChange={(event) =>
-                      setCustomRadioForm((prev) => ({ ...prev, coverurl: event.target.value }))
-                    }
-                  />
-                </InlineFormField>
-              </InlineForm>
+                  <InlineForm
+                    open={customRadioModalOpen}
+                    eyebrow={t('content.radio.custom.form.eyebrow')}
+                    title={t('content.radio.custom.form.title')}
+                    description={t('content.radio.custom.form.description')}
+                    cancelLabel={t('content.radio.custom.form.cancel')}
+                    submitLabel={t('content.radio.custom.form.submit')}
+                    submitDisabled={!customRadioFormValid}
+                    busy={customRadioSubmitting}
+                    onCancel={() => closeCustomRadioModal()}
+                    onSubmit={() => void handleCustomRadioAdd()}
+                  >
+                    <RadioStationFinder
+                      preview={streamPreview}
+                      onPick={(hit) => {
+                        setCustomRadioForm({
+                          name: hit.name,
+                          stream: hit.stream,
+                          coverurl: hit.coverurl ?? '',
+                          source: { provider: 'radiobrowser', stationId: hit.id },
+                        });
+                      }}
+                    />
+                    <InlineFormField label={t('content.radio.custom.form.nameLabel')}>
+                      <input
+                        className="inline-form__input"
+                        type="text"
+                        placeholder={t('content.radio.custom.form.namePlaceholder')}
+                        value={customRadioForm.name}
+                        onChange={(event) =>
+                          setCustomRadioForm((prev) => ({ ...prev, name: event.target.value }))
+                        }
+                      />
+                    </InlineFormField>
+                    <InlineFormField
+                      label={t('content.radio.custom.form.streamLabel')}
+                      help={t('content.radio.custom.form.streamHelp')}
+                    >
+                      <div className="radio-find__bar">
+                        <input
+                          className="inline-form__input is-mono"
+                          type="url"
+                          placeholder={t('content.radio.custom.form.streamPlaceholder')}
+                          value={customRadioForm.stream}
+                          onChange={(event) =>
+                            setCustomRadioForm((prev) => ({
+                              ...prev,
+                              stream: event.target.value,
+                              // Typed over by hand: this is no longer the index's entry, so it
+                              // must not be saved or reported as one.
+                              source: undefined,
+                            }))
+                          }
+                        />
+                        <PreviewButton url={customRadioForm.stream} preview={streamPreview} />
+                      </div>
+                    </InlineFormField>
+                    <InlineFormField label={t('content.radio.custom.form.coverLabel')} optional>
+                      <input
+                        className="inline-form__input is-mono"
+                        type="url"
+                        placeholder={t('content.radio.custom.form.coverPlaceholder')}
+                        value={customRadioForm.coverurl}
+                        onChange={(event) =>
+                          setCustomRadioForm((prev) => ({ ...prev, coverurl: event.target.value }))
+                        }
+                      />
+                    </InlineFormField>
+                  </InlineForm>
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

@@ -80,8 +80,6 @@
         "desc": "Radio-Provider wie Streaming-Dienste verbinden. TuneIn zeigt deine Presets; Radio Paradise fügt kuratierte, hörerfinanzierte Streams hinzu.",
         "add": "+ Radio-Provider hinzufügen",
         "radioBadge": "Radio",
-        "emptyTitle": "Noch keine Radio-Provider",
-        "emptySub": "Füge TuneIn oder Radio Paradise hinzu.",
         "pickerEyebrow": "Neuer Radio-Provider",
         "pickerTitle": "Radio-Provider hinzufügen",
         "pickerSubtitle": "Wähle einen Radio-Provider zum Verbinden"
@@ -122,8 +120,11 @@
         "emptyTitle": "Noch keine eigenen Streams",
         "emptySub": "Hinzufügen, um sie in Loxone verfügbar zu machen.",
         "remove": "Entfernen",
-        "configured_one": "{{count}} Stream konfiguriert",
-        "configured_other": "{{count}} Streams konfiguriert",
+        "manage": "Verwalten",
+        "hide": "Ausblenden",
+        "rowMeta_one": "{{count}} Stream",
+        "rowMeta_other": "{{count}} Streams",
+        "rowMetaEmpty": "Noch keine",
         "add": "+ Eigenen Stream hinzufügen",
         "find": {
           "label": "Sender suchen",
