@@ -8,6 +8,18 @@ export type LatestVersions = {
   corePrerelease: string | null;
   ui: string | null;
   player: string | null;
+  /**
+   * Newest prerelease of each web bundle, for an install on the beta channel. Absent on
+   * servers older than this field, which is why every read below tolerates undefined.
+   */
+  uiPrerelease: string | null;
+  playerPrerelease: string | null;
+  /** The `minCore` those releases state, so a bundle out of reach can be shown as such
+   *  rather than discovered by pressing the button and collecting a 409. */
+  uiMinCore: string | null;
+  uiPrereleaseMinCore: string | null;
+  playerMinCore: string | null;
+  playerPrereleaseMinCore: string | null;
   /** Newest published build of the client the speakers run. */
   sonnClient: string | null;
   components: Record<string, string>;
@@ -19,6 +31,12 @@ export const EMPTY_LATEST: LatestVersions = {
   corePrerelease: null,
   ui: null,
   player: null,
+  uiPrerelease: null,
+  playerPrerelease: null,
+  uiMinCore: null,
+  uiPrereleaseMinCore: null,
+  playerMinCore: null,
+  playerPrereleaseMinCore: null,
   sonnClient: null,
   components: {},
   componentDescriptions: {},
@@ -90,6 +108,81 @@ export function compareSemver(current: string, latest: string): -1 | 0 | 1 {
   return comparePrerelease(currentNorm.prerelease, latestNorm.prerelease);
 }
 
+/**
+ * Whether a core is at least a stated minimum.
+ *
+ * Open on both unknowns, matching the server exactly: a bundle that states no minimum made
+ * no claim and installs, and a core whose version cannot be ordered (`dev`, a working copy)
+ * is never gated out of its own build. Disagreeing with the server here would be worse than
+ * not checking at all — the console would grey out a button the server would happily honour,
+ * or promise one it will refuse.
+ */
+export function satisfiesMin(running: string | null, minimum: string | null | undefined): boolean {
+  const min = (minimum ?? '').trim();
+  const have = (running ?? '').trim();
+  if (!min || !have) return true;
+  if (!normalizeVersion(min) || !normalizeVersion(have)) return true;
+  return compareSemver(have, min) >= 0;
+}
+
+/** What the console shows for one web bundle: what it can offer, and what stops it. */
+export type WebAppTrack = {
+  /** The release this install would actually receive, or the newest one if none fits. */
+  latest: string | null;
+  outdated: boolean;
+  /** The core a newer bundle needs, when that is what is standing in the way. */
+  blockedBy: string | null;
+};
+
+/**
+ * Which release of a bundle this install is offered, mirroring what the server will do.
+ *
+ * Two rules, both the server's. The channel comes from the **core**, not from the bundle: a
+ * beta core is offered beta bundles, with stables still eligible behind them, because these
+ * repos may publish no prereleases at all and a beta install must then get the stable one.
+ * Then compatibility: the newest candidate this core satisfies wins, so an install on an
+ * older core is offered the last bundle built for it rather than a button that fails.
+ *
+ * When nothing fits, the newest is still named — with the core it needs. A card that simply
+ * says "up to date" while a newer bundle exists is the version of this that helps nobody.
+ */
+export function webAppTrack(opts: {
+  installed: string | null;
+  coreVersion: string;
+  stable: string | null;
+  stableMinCore: string | null;
+  prerelease: string | null;
+  prereleaseMinCore: string | null;
+}): WebAppTrack {
+  // From the parsed version, not from a substring search: a stable core carrying a build
+  // stamp (`4.0.0+dev-20260911`) contains a dash too, and reading that as a prerelease would
+  // offer a stable install the beta bundles.
+  const coreIsPrerelease = Boolean(normalizeVersion(opts.coreVersion)?.prerelease);
+  const candidates: Array<{ version: string; minCore: string | null }> = [];
+  if (coreIsPrerelease && opts.prerelease) {
+    candidates.push({ version: opts.prerelease, minCore: opts.prereleaseMinCore });
+  }
+  if (opts.stable) {
+    candidates.push({ version: opts.stable, minCore: opts.stableMinCore });
+  }
+
+  const fits = candidates.find((c) => satisfiesMin(opts.coreVersion, c.minCore));
+  const chosen = fits ?? candidates[0] ?? null;
+  if (!chosen) {
+    return { latest: null, outdated: false, blockedBy: null };
+  }
+  const outdated = opts.installed
+    ? compareSemver(opts.installed, chosen.version) === -1
+    : // Nothing installed at all — the player before it was ever fetched — is behind by
+      // definition, and the card's job is to offer the install.
+      true;
+  return {
+    latest: chosen.version,
+    outdated,
+    blockedBy: fits ? null : (chosen.minCore ?? null),
+  };
+}
+
 /** Fetches the latest available versions from our own backend, which polls
  *  GitHub + npm once and caches the result server-side. This keeps every admin
  *  browser/tab behind one IP from independently hammering the upstream APIs
@@ -140,11 +233,31 @@ export function computeHasUpdates(
       ? compareSemver(version, latest.corePrerelease)
       : null;
   const coreOutdated = coreComparison === -1 || corePrereleaseComparison === -1;
-  const uiOutdated = Boolean(latest.ui && compareSemver(appVersion, latest.ui) === -1);
+  // A bundle that cannot be installed until the core moves is not an update anyone can act
+  // on, and counting it here would leave the chip in the shell permanently lit for a button
+  // that refuses. The core's own row is already telling that story.
+  const uiTrack = webAppTrack({
+    installed: status?.adminUi?.installed ?? appVersion,
+    coreVersion: version,
+    stable: latest.ui,
+    stableMinCore: latest.uiMinCore,
+    prerelease: latest.uiPrerelease,
+    prereleaseMinCore: latest.uiPrereleaseMinCore,
+  });
+  const uiOutdated = uiTrack.outdated && !uiTrack.blockedBy;
   const playerInstalled = status?.player?.installed ?? null;
-  const playerOutdated = Boolean(
-    playerInstalled && latest.player && compareSemver(playerInstalled, latest.player) === -1,
-  );
+  const playerTrack = webAppTrack({
+    installed: playerInstalled,
+    coreVersion: version,
+    stable: latest.player,
+    stableMinCore: latest.playerMinCore,
+    prerelease: latest.playerPrerelease,
+    prereleaseMinCore: latest.playerPrereleaseMinCore,
+  });
+  // A player that was never fetched is not "behind" for the purposes of the shell's chip:
+  // plenty of installs never want one, and lighting it forever would train people to
+  // ignore it. The card below still offers the install.
+  const playerOutdated = Boolean(playerInstalled) && playerTrack.outdated && !playerTrack.blockedBy;
   const sonnClientInstalled = status?.sonnClient?.installed ?? null;
   const sonnClientOutdated = Boolean(
     sonnClientInstalled &&

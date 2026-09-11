@@ -1,3 +1,12 @@
+/** A web bundle on disk, judged against the core serving it. */
+export type WebBundleStatus = {
+  installed: string | null;
+  /** The oldest core the bundle says it needs, or null when it makes no claim. */
+  minCore?: string | null;
+  /** False only when the bundle names a minimum this core is genuinely below. */
+  satisfied?: boolean;
+};
+
 export type StatusResponse = {
   version?: string;
   /**
@@ -31,7 +40,20 @@ export type StatusResponse = {
   // Whether a server-core update will auto-restart (containerized or supervised).
   restartSupervised?: boolean;
   packages?: Record<string, { installed: string | null; declared: string | null }>;
-  player?: { installed: string | null };
+  player?: WebBundleStatus;
+  /**
+   * The console bundle as the server sees it on disk. Absent on servers older than this
+   * field, which knew nothing about the UI they were serving — fall back to the version
+   * compiled into this bundle.
+   */
+  adminUi?: WebBundleStatus;
+  /**
+   * Bundle versions this core wants to be talking to, when it wants anything.
+   *
+   * Advisory by nature: a console too old to be served is already the one rendering the
+   * page, so there is nothing to block — only something to say.
+   */
+  requires?: { adminUi: string | null; player: string | null };
   /** Oldest build running on a Sonn Client speaker, or null when none has reported. */
   sonnClient?: { installed: string | null };
   timestamp?: number | string;

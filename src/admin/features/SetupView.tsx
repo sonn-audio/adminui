@@ -19,7 +19,7 @@ import { uploadEventSound } from '../services/eventSoundsApi';
 import { usePolling } from '../hooks/usePolling';
 import { useGlobalAlert } from '../components/GlobalAlert';
 import { useUpdateCheck } from '../components/UpdateCheckContext';
-import { componentPackageNames, compareSemver, normalizeTag } from '../services/updateCheck';
+import { componentPackageNames, compareSemver, normalizeTag, satisfiesMin, webAppTrack } from '../services/updateCheck';
 import SubTabs from '../components/SubTabs';
 import SonnClientsSection from './SonnClientsSection';
 import { SubPanel, useSubPanelTransition } from '../components/SubPanel';
@@ -440,12 +440,47 @@ export default function SetupView(): JSX.Element {
       ? compareSemver(versionLabel, latestCorePrerelease)
       : null;
   const coreOutdated = coreComparison === -1 || corePrereleaseComparison === -1;
-  const uiOutdated =
-    latestUiRelease && compareSemver(__APP_VERSION__, latestUiRelease) === -1;
+  /*
+   * What each bundle is offered, decided the same way the server decides it: the channel
+   * comes from the core, and within it the newest release this core satisfies wins. When
+   * none does, the newest is still named along with the core it needs — a card that reads
+   * "up to date" while a newer bundle exists helps nobody.
+   */
+  const uiInstalled = status?.adminUi?.installed ?? __APP_VERSION__;
+  const uiTrack = webAppTrack({
+    installed: uiInstalled,
+    coreVersion: versionLabel === '—' ? '' : versionLabel,
+    stable: latestUiRelease,
+    stableMinCore: latest.uiMinCore,
+    prerelease: latest.uiPrerelease,
+    prereleaseMinCore: latest.uiPrereleaseMinCore,
+  });
+  const uiOutdated = uiTrack.outdated && !uiTrack.blockedBy;
   const playerInstalled = status?.player?.installed ?? null;
-  const playerOutdated = Boolean(
-    playerInstalled && latestPlayerRelease && compareSemver(playerInstalled, latestPlayerRelease) === -1,
-  );
+  const playerTrack = webAppTrack({
+    installed: playerInstalled,
+    coreVersion: versionLabel === '—' ? '' : versionLabel,
+    stable: latestPlayerRelease,
+    stableMinCore: latest.playerMinCore,
+    prerelease: latest.playerPrerelease,
+    prereleaseMinCore: latest.playerPrereleaseMinCore,
+  });
+  const playerOutdated = Boolean(playerInstalled) && playerTrack.outdated && !playerTrack.blockedBy;
+  /*
+   * The other direction: this core wants a newer console than the one rendering this page.
+   * Nothing can block that — the bundle is already installed and serving — so it is said
+   * out loud instead, next to the button that fixes it.
+   */
+  const consoleTooOld = !satisfiesMin(uiInstalled, status?.requires?.adminUi);
+  const playerTooOld =
+    Boolean(playerInstalled) && !satisfiesMin(playerInstalled, status?.requires?.player);
+  /*
+   * And the reverse of the reverse: a bundle on disk that outgrew its core. Only reachable
+   * by downgrading the core or by a build-time fetch, since the update preflight refuses it
+   * — but silence in that state would be a console quietly failing with no explanation.
+   */
+  const consoleAheadOfCore = status?.adminUi?.satisfied === false;
+  const playerAheadOfCore = status?.player?.satisfied === false;
   const componentOutdated = componentPackageNames(status, latest).some((name) => {
     const current = status?.packages?.[name]?.installed;
     const latestVer = componentLatest[name];
@@ -546,7 +581,7 @@ export default function SetupView(): JSX.Element {
   async function handleAdminUiUpdate(): Promise<void> {
     if (adminUiUpdating) return;
 
-    const releaseTag = latestUiRelease ? `v${latestUiRelease}` : undefined;
+    const releaseTag = uiTrack.latest ? `v${uiTrack.latest}` : undefined;
     const ok = await confirm({
       title: t('setup.updates.uiUpdateConfirm'),
       message: t('setup.updates.uiUpdateMessage', { release: releaseTag ? ` (${releaseTag})` : '' }),
@@ -587,7 +622,7 @@ export default function SetupView(): JSX.Element {
   async function handlePlayerUpdate(): Promise<void> {
     if (playerUpdating) return;
 
-    const releaseTag = latestPlayerRelease ? `v${latestPlayerRelease}` : undefined;
+    const releaseTag = playerTrack.latest ? `v${playerTrack.latest}` : undefined;
     const ok = await confirm({
       title: t('setup.updates.playerUpdateConfirm'),
       message: t('setup.updates.playerUpdateMessage', { release: releaseTag ? ` (${releaseTag})` : '' }),
@@ -680,6 +715,10 @@ export default function SetupView(): JSX.Element {
     updatedAt: string | null;
     onUpdate: () => void;
     onReload?: () => void;
+    /** The core version a newer release needs, when that is what stands in the way. */
+    blockedBy?: string | null;
+    /** Said when the bundle on disk is the wrong one for this core, either way round. */
+    warning?: string | null;
   }): JSX.Element {
     return (
       <div className="setup-webapp">
@@ -697,9 +736,20 @@ export default function SetupView(): JSX.Element {
               </>
             ) : null}
           </span>
+          {cfg.warning ? <span className="setup-webapp__warning">{cfg.warning}</span> : null}
         </div>
         <div className="setup-webapp__action">
-          {cfg.canUpdate ? (
+          {cfg.blockedBy ? (
+            // Not a disabled button: a control that cannot be pressed still reads as an
+            // offer. The sentence says what to do instead, and the core's own row above is
+            // where doing it starts.
+            <span
+              className="setup-webapp__chip setup-webapp__chip--blocked"
+              title={t('setup.updates.needsCoreTitle', { version: cfg.blockedBy })}
+            >
+              {t('setup.updates.needsCore', { version: cfg.blockedBy })}
+            </span>
+          ) : cfg.canUpdate ? (
             <button
               type="button"
               className="setup-btn setup-btn--primary"
@@ -2033,12 +2083,18 @@ export default function SetupView(): JSX.Element {
                         <line x1="12" y1="17" x2="12" y2="21" />
                       </svg>
                     ),
-                    current: `v${__APP_VERSION__}`,
-                    latest: latestUiRelease,
-                    releasesUrl: latestUiRelease
-                      ? `https://github.com/sonn-audio/adminui/releases/tag/v${latestUiRelease}`
+                    current: `v${uiInstalled}`,
+                    latest: uiTrack.latest,
+                    releasesUrl: uiTrack.latest
+                      ? `https://github.com/sonn-audio/adminui/releases/tag/v${uiTrack.latest}`
                       : 'https://github.com/sonn-audio/adminui/releases',
                     canUpdate: Boolean(uiOutdated),
+                    blockedBy: uiTrack.blockedBy,
+                    warning: consoleTooOld
+                      ? t('setup.updates.consoleTooOld', { version: status?.requires?.adminUi ?? '' })
+                      : consoleAheadOfCore
+                        ? t('setup.updates.bundleAheadOfCore', { version: status?.adminUi?.minCore ?? '' })
+                        : null,
                     updating: adminUiUpdating,
                     updatedAt: adminUiUpdatedAt,
                     onUpdate: handleAdminUiUpdate,
@@ -2052,11 +2108,17 @@ export default function SetupView(): JSX.Element {
                       </svg>
                     ),
                     current: playerInstalled ? `v${playerInstalled}` : '—',
-                    latest: latestPlayerRelease,
-                    releasesUrl: latestPlayerRelease
-                      ? `https://github.com/sonn-audio/player/releases/tag/v${latestPlayerRelease}`
+                    latest: playerTrack.latest,
+                    releasesUrl: playerTrack.latest
+                      ? `https://github.com/sonn-audio/player/releases/tag/v${playerTrack.latest}`
                       : 'https://github.com/sonn-audio/player/releases',
-                    canUpdate: Boolean(playerOutdated || (latestPlayerRelease && !playerInstalled)),
+                    canUpdate: Boolean(playerOutdated || (playerTrack.latest && !playerInstalled)),
+                    blockedBy: playerTrack.blockedBy,
+                    warning: playerTooOld
+                      ? t('setup.updates.playerTooOld', { version: status?.requires?.player ?? '' })
+                      : playerAheadOfCore
+                        ? t('setup.updates.bundleAheadOfCore', { version: status?.player?.minCore ?? '' })
+                        : null,
                     updating: playerUpdating,
                     updatedAt: playerUpdatedAt,
                     onUpdate: handlePlayerUpdate,

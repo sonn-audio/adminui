@@ -1588,6 +1588,19 @@
 .setup-webapp__chip--muted {
   color: var(--text-dim);
 }
+/* A newer bundle exists but this core is below what it needs. Amber rather than the
+   accent: it is a state to resolve, not a success — and deliberately not a disabled
+   button, which still reads as an offer. */
+.setup-webapp__chip--blocked {
+  color: var(--warn-bright);
+  cursor: help;
+}
+/* Said under the version line, where the mismatch it describes is visible. */
+.setup-webapp__warning {
+  font-size: 11px;
+  line-height: 1.4;
+  color: var(--warn-bright);
+}
 a.setup-webapp__chip--ok:hover {
   color: var(--accent-bright);
 }

@@ -1092,7 +1092,12 @@
       "componentUpdatedTitle": "Component updated",
       "componentUpdatedMessage": "{{name}} is now {{version}}. Restart services if needed.",
       "componentUpdateFailedTitle": "Component update failed",
-      "componentUpdateFailedDefault": "Failed to update {{name}}"
+      "componentUpdateFailedDefault": "Failed to update {{name}}",
+      "needsCore": "Needs server {{version}}",
+      "needsCoreTitle": "A newer version is available, but it only works on server {{version}} or later. Update the server core first, then come back here.",
+      "consoleTooOld": "This server works best with Admin UI {{version}} or later. Update to get everything it offers.",
+      "playerTooOld": "This server works best with Player {{version}} or later. Update to get everything it offers.",
+      "bundleAheadOfCore": "Built for server {{version}} or later, so parts of it may not work until the server core is updated."
     },
     "actions": {
       "restartConfirmTitle": "Restart AudioServer?",

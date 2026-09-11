@@ -1,8 +1,11 @@
 {
   "name": "admin-ui",
   "private": true,
-  "version": "6.0.0",
+  "version": "6.1.0",
   "type": "module",
+  "sonn": {
+    "minCore": "4.0.0-beta.21"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",

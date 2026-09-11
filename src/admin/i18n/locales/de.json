@@ -1092,7 +1092,12 @@
       "componentUpdatedTitle": "Komponente aktualisiert",
       "componentUpdatedMessage": "{{name}} ist jetzt {{version}}. Bei Bedarf Dienste neu starten.",
       "componentUpdateFailedTitle": "Komponenten-Update fehlgeschlagen",
-      "componentUpdateFailedDefault": "{{name}} konnte nicht aktualisiert werden"
+      "componentUpdateFailedDefault": "{{name}} konnte nicht aktualisiert werden",
+      "needsCore": "Benötigt Server {{version}}",
+      "needsCoreTitle": "Eine neuere Version ist verfügbar, läuft aber erst ab Server {{version}}. Aktualisieren Sie zuerst den Server-Core und kommen Sie dann hierher zurück.",
+      "consoleTooOld": "Dieser Server passt am besten zu Admin UI {{version}} oder neuer. Aktualisieren Sie, um alles nutzen zu können.",
+      "playerTooOld": "Dieser Server passt am besten zu Player {{version}} oder neuer. Aktualisieren Sie, um alles nutzen zu können.",
+      "bundleAheadOfCore": "Gebaut für Server {{version}} oder neuer — Teile funktionieren möglicherweise erst nach einem Update des Server-Cores."
     },
     "actions": {
       "restartConfirmTitle": "AudioServer neu starten?",
