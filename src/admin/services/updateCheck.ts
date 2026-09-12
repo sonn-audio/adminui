@@ -153,6 +153,13 @@ export function webAppTrack(opts: {
   stableMinCore: string | null;
   prerelease: string | null;
   prereleaseMinCore: string | null;
+  /**
+   * Set on a dev build, where the server waives minimums and installs the newest bundle
+   * regardless. Showing "needs server X" here would name a requirement the server on the
+   * other end of the button does not enforce — dev's version number is behind its own code,
+   * so the minimum is measuring the wrong thing on that branch.
+   */
+  ignoreMinimums?: boolean;
 }): WebAppTrack {
   // From the parsed version, not from a substring search: a stable core carrying a build
   // stamp (`4.0.0+dev-20260911`) contains a dash too, and reading that as a prerelease would
@@ -166,7 +173,9 @@ export function webAppTrack(opts: {
     candidates.push({ version: opts.stable, minCore: opts.stableMinCore });
   }
 
-  const fits = candidates.find((c) => satisfiesMin(opts.coreVersion, c.minCore));
+  const fits = opts.ignoreMinimums
+    ? candidates[0]
+    : candidates.find((c) => satisfiesMin(opts.coreVersion, c.minCore));
   const chosen = fits ?? candidates[0] ?? null;
   if (!chosen) {
     return { latest: null, outdated: false, blockedBy: null };
@@ -236,6 +245,7 @@ export function computeHasUpdates(
   // A bundle that cannot be installed until the core moves is not an update anyone can act
   // on, and counting it here would leave the chip in the shell permanently lit for a button
   // that refuses. The core's own row is already telling that story.
+  const ignoreMinimums = status?.buildChannel === 'dev';
   const uiTrack = webAppTrack({
     installed: status?.adminUi?.installed ?? appVersion,
     coreVersion: version,
@@ -243,6 +253,7 @@ export function computeHasUpdates(
     stableMinCore: latest.uiMinCore,
     prerelease: latest.uiPrerelease,
     prereleaseMinCore: latest.uiPrereleaseMinCore,
+    ignoreMinimums,
   });
   const uiOutdated = uiTrack.outdated && !uiTrack.blockedBy;
   const playerInstalled = status?.player?.installed ?? null;
@@ -253,6 +264,7 @@ export function computeHasUpdates(
     stableMinCore: latest.playerMinCore,
     prerelease: latest.playerPrerelease,
     prereleaseMinCore: latest.playerPrereleaseMinCore,
+    ignoreMinimums,
   });
   // A player that was never fetched is not "behind" for the purposes of the shell's chip:
   // plenty of installs never want one, and lighting it forever would train people to

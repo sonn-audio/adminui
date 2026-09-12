@@ -447,6 +447,9 @@ export default function SetupView(): JSX.Element {
    * "up to date" while a newer bundle exists helps nobody.
    */
   const uiInstalled = status?.adminUi?.installed ?? __APP_VERSION__;
+  // A dev server installs the newest bundle whatever it asks for, so the console must not
+  // stand in front of that button naming a requirement nobody is going to enforce.
+  const ignoreMinimums = status?.buildChannel === 'dev';
   const uiTrack = webAppTrack({
     installed: uiInstalled,
     coreVersion: versionLabel === '—' ? '' : versionLabel,
@@ -454,6 +457,7 @@ export default function SetupView(): JSX.Element {
     stableMinCore: latest.uiMinCore,
     prerelease: latest.uiPrerelease,
     prereleaseMinCore: latest.uiPrereleaseMinCore,
+    ignoreMinimums,
   });
   const uiOutdated = uiTrack.outdated && !uiTrack.blockedBy;
   const playerInstalled = status?.player?.installed ?? null;
@@ -464,6 +468,7 @@ export default function SetupView(): JSX.Element {
     stableMinCore: latest.playerMinCore,
     prerelease: latest.playerPrerelease,
     prereleaseMinCore: latest.playerPrereleaseMinCore,
+    ignoreMinimums,
   });
   const playerOutdated = Boolean(playerInstalled) && playerTrack.outdated && !playerTrack.blockedBy;
   /*
