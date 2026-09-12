@@ -188,7 +188,10 @@ export function webAppTrack(opts: {
   return {
     latest: chosen.version,
     outdated,
-    blockedBy: fits ? null : (chosen.minCore ?? null),
+    // Only when an update is actually being withheld. An install already *on* the release
+    // that states the minimum is not blocked by it — saying so would put "needs server X"
+    // where "up to date" belongs, on a card with nothing left to install.
+    blockedBy: fits || !outdated ? null : (chosen.minCore ?? null),
   };
 }
 
