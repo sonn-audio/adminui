@@ -140,6 +140,8 @@ export interface SonosDevice {
   host: string;
   name?: string;
   roomName?: string;
+  /** e.g. "Sonos Beam"; absent on servers that predate it. */
+  model?: string;
   householdId?: string;
   active?: boolean;
 }

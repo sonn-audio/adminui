@@ -3957,8 +3957,11 @@ function ZoneOutputEditor({
                     );
                   }
                   const friendly = parseFriendlyName(device.name || device.roomName || device.host);
-                  const typeLabel = friendly.secondary || (device.householdId ? `${t('zones.output.sonos')} ${device.householdId}` : t('zones.output.sonos'));
-                  if (!matchesDeviceQuery(friendly.primary, friendly.secondary, device.name, device.roomName, device.host, typeLabel)) {
+                  // The room is the title; which speaker it is, and where, tells two of them apart.
+                  const typeLabel = device.model
+                    ? [device.model, device.host].filter(Boolean).join(' · ')
+                    : friendly.secondary || (device.householdId ? `${t('zones.output.sonos')} ${device.householdId}` : t('zones.output.sonos'));
+                  if (!matchesDeviceQuery(friendly.primary, friendly.secondary, device.name, device.roomName, device.model, device.host, typeLabel)) {
                     return null;
                   }
                   return (
