@@ -1471,6 +1471,7 @@
       "localSubtitle": "Zonenspezifische Aufweck-Zeiten und optionalen lokalen Trigger hier eintragen. Die Zeiten unten gelten auch für Lautsprecher, die sich selbst einschalten, etwa Aktivlautsprecher mit Signalerkennung.",
       "preDelay": "Lautsprecher-Aufwachzeit (ms)",
       "preDelayHelp": "Stille vor dem Start der Wiedergabe, damit der Lautsprecher vor dem ersten Ton wach ist. Wird übersprungen, solange die Zone noch als eingeschaltet gilt (siehe Standby-Zeit).",
+      "groupPreDelayHelp": "Stille vor dem Start der Wiedergabe in einer Zone dieser Gruppe, damit der gemeinsame Verstärker vor dem ersten Ton wach ist. Wird übersprungen, solange der Verstärker schon eingeschaltet ist, etwa weil eine andere Zone der Gruppe spielt.",
       "offDelay": "Standby-Zeit (ms)",
       "offDelayHelp": "Wie lange die Zone nach dem Stoppen noch als eingeschaltet gilt. In diesem Zeitraum entfällt die Aufwachzeit. Mit Relais wird dann auch abgeschaltet; bei selbstschaltenden Lautsprechern auf deren Wachzeit einstellen.",
       "switchingMethod": "Schaltmethode",

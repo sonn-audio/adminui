@@ -1473,6 +1473,7 @@
       "localSubtitle": "Keep zone-specific wake-up timing here, plus any optional local trigger. The timing below also applies to speakers that switch themselves on, such as active speakers with line sensing.",
       "preDelay": "Speaker wake-up delay (ms)",
       "preDelayHelp": "Silence added before playback starts, so the speaker is awake before the first sound. Skipped while the zone counts as still on (see the standby timeout).",
+      "groupPreDelayHelp": "Silence added before playback starts in a zone of this group, so the shared amp is awake before the first sound. Skipped while the amp is already on, for instance because another zone of the group is playing.",
       "offDelay": "Standby timeout (ms)",
       "offDelayHelp": "How long the zone counts as still on after playback stops. Within this window the wake-up delay is skipped. With a relay this is also when it switches off; with self-switching speakers, match it to how long they stay awake.",
       "switchingMethod": "Switching method",

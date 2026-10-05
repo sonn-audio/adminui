@@ -5339,6 +5339,22 @@ function PowerGroupEditorCard({
             placeholder="300000"
           />
         </label>
+        <label className="zone-output-field">
+          <span>{t('zones.power.preDelay')}</span>
+          <input
+            type="number"
+            min={0}
+            value={stringifyNumber(draft.powerManager?.playbackPreDelayMs)}
+            onChange={(event) =>
+              updatePowerManager({
+                playbackPreDelayMs: event.target.value as any,
+              })
+            }
+            disabled={saving}
+            placeholder="0"
+          />
+          <small className="zone-output-field__hint">{t('zones.power.groupPreDelayHelp')}</small>
+        </label>
       </div>
 
       {method === 'gpio' && (
@@ -5669,6 +5685,7 @@ function cloneGroupPowerManager(config: ZonePowerManagerConfig | null | undefine
         : typeof config?.offDelayMs === 'string'
           ? config.offDelayMs
           : 300000,
+    playbackPreDelayMs: config?.playbackPreDelayMs,
     gpio: { ...(config?.gpio ?? {}) },
     url: { ...(config?.url ?? {}) },
     udp: { ...(config?.udp ?? {}) },
@@ -5697,6 +5714,7 @@ function normalizeGroupPowerManagerForSave(
   if (!config) return null;
   const normalized: ZonePowerManagerConfig = {
     offDelayMs: toOptionalNumber(config.offDelayMs),
+    playbackPreDelayMs: toOptionalNumber(config.playbackPreDelayMs),
   };
   if (config.gpio?.enabled === true) {
     normalized.gpio = {
