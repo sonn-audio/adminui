@@ -3555,3 +3555,7 @@
 .tunein-presets__note.is-error {
   color: var(--danger);
 }
+
+.bridge-modal__help.is-error {
+  color: var(--danger);
+}

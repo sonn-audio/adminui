@@ -30,6 +30,9 @@ import {
   fetchYtMusicStatus,
   checkYtMusic,
   installYtMusicPotPlugin,
+  fetchAmazonMusicStorefronts,
+  startAmazonMusicLogin,
+  finishAmazonMusicLogin,
 } from '../services/contentApi';
 import type {
   YtDlpStatusResponse,
@@ -41,6 +44,8 @@ import type {
   LibraryCoverSample,
   SpotifyBridgeConfig,
   CreateSpotifyBridgePayload,
+  AmazonMusicStorefront,
+  AmazonMusicTier,
 } from '../services/contentApi';
 import {
   fetchAppleMusicWidevineStatus,
@@ -131,7 +136,7 @@ type CustomRadioFormState = {
 };
 
 type BridgeFormState = {
-  provider: 'musicassistant' | 'applemusic' | 'ytmusic' | 'deezer' | 'tidal' | 'youtube' | 'soundcloud';
+  provider: 'musicassistant' | 'applemusic' | 'ytmusic' | 'deezer' | 'tidal' | 'youtube' | 'soundcloud' | 'amazonmusic';
   label: string;
   host: string;
   port: number;
@@ -144,6 +149,14 @@ type BridgeFormState = {
   tidalCountryCode: string;
   youtubeApiKey: string;
   soundcloudOauthToken: string;
+  /** Storefront the Amazon sign-in is for; decides which Amazon backend the account lives on. */
+  amazonCountry: string;
+  /** The sign-in in progress, from start until the account is saved. */
+  amazonLoginId: string;
+  /** The address Amazon's sign-in ended on, pasted back by the user. */
+  amazonLandingUrl: string;
+  /** Who is signed in: from a finished sign-in, or the stored account when editing. */
+  amazonAccount: { country: string; accountName?: string; tier?: AmazonMusicTier } | null;
   mode: 'source' | 'sink';
 };
 
@@ -511,6 +524,10 @@ const createEmptyBridgeForm = (): BridgeFormState => ({
   tidalCountryCode: 'US',
   youtubeApiKey: '',
   soundcloudOauthToken: '',
+  amazonCountry: 'US',
+  amazonLoginId: '',
+  amazonLandingUrl: '',
+  amazonAccount: null,
   mode: 'source',
 });
 
@@ -596,6 +613,8 @@ function resolveBridgeLogoUrl(provider?: string | null): string | null {
       return p('providers/soundcloud.svg');
     case 'tidal':
       return p('providers/tidal.svg');
+    case 'amazonmusic':
+      return p('providers/amazon-music.svg');
     default:
       return null;
   }
@@ -1177,6 +1196,9 @@ export default function ContentView(): JSX.Element {
     if (bridgeForm.provider === 'soundcloud') {
       return bridgeForm.soundcloudOauthToken.trim().length > 0;
     }
+    if (bridgeForm.provider === 'amazonmusic') {
+      return bridgeForm.amazonAccount !== null;
+    }
     return true;
   }, [bridgeForm]);
   const bridgeProviderLogoUrl = React.useMemo(
@@ -1471,7 +1493,8 @@ export default function ContentView(): JSX.Element {
 
   React.useEffect(() => {
     if (!bridgeModalOpen) return;
-    if (bridgeForm.provider !== 'applemusic') return;
+    // Amazon Music plays through the same CDM files as Apple Music.
+    if (bridgeForm.provider !== 'applemusic' && bridgeForm.provider !== 'amazonmusic') return;
     void refreshAppleMusicWidevine();
   }, [bridgeForm.provider, bridgeModalOpen, refreshAppleMusicWidevine]);
 
@@ -1846,6 +1869,16 @@ export default function ContentView(): JSX.Element {
         tidalCountryCode: bridge.tidalCountryCode ?? 'US',
         youtubeApiKey: bridge.youtubeApiKey ?? '',
         soundcloudOauthToken: bridge.soundcloudOauthToken ?? '',
+        amazonCountry: bridge.amazonMusic?.country ?? 'US',
+        amazonLoginId: '',
+        amazonLandingUrl: '',
+        amazonAccount: bridge.amazonMusic
+          ? {
+              country: bridge.amazonMusic.country ?? '',
+              accountName: bridge.amazonMusic.accountName,
+              tier: bridge.amazonMusic.tier,
+            }
+          : null,
         mode: bridge.mode === 'sink' ? 'sink' : 'source',
       },
       bridgeFeedback: null,
@@ -2232,6 +2265,59 @@ export default function ContentView(): JSX.Element {
     });
   };
 
+  const [amazonStorefronts, setAmazonStorefronts] = React.useState<AmazonMusicStorefront[]>([]);
+  const [amazonBusy, setAmazonBusy] = React.useState<'start' | 'finish' | null>(null);
+  const [amazonError, setAmazonError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!bridgeModalOpen || bridgeForm.provider !== 'amazonmusic' || amazonStorefronts.length) return;
+    fetchAmazonMusicStorefronts()
+      .then(setAmazonStorefronts)
+      .catch((err) => setAmazonError(err instanceof Error ? err.message : String(err)));
+  }, [bridgeModalOpen, bridgeForm.provider, amazonStorefronts.length]);
+
+  // Amazon's sign-in cannot come back to this page, so it opens in a tab of its own and the user
+  // pastes the address it ends on. The tab is opened before the request so no popup blocker sees
+  // it as unprompted.
+  const handleAmazonSignInStart = async (): Promise<void> => {
+    const tab = window.open('about:blank', '_blank');
+    setAmazonBusy('start');
+    setAmazonError(null);
+    try {
+      const { loginId, url } = await startAmazonMusicLogin(bridgeForm.amazonCountry);
+      updateBridgeForm({ amazonLoginId: loginId, amazonLandingUrl: '' });
+      if (tab) {
+        tab.location.href = url;
+      } else {
+        window.open(url, '_blank', 'noopener');
+      }
+    } catch (err) {
+      tab?.close();
+      setAmazonError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setAmazonBusy(null);
+    }
+  };
+
+  const handleAmazonSignInFinish = async (): Promise<void> => {
+    if (!bridgeForm.amazonLoginId || !bridgeForm.amazonLandingUrl.trim()) return;
+    setAmazonBusy('finish');
+    setAmazonError(null);
+    try {
+      const result = await finishAmazonMusicLogin(bridgeForm.amazonLoginId, bridgeForm.amazonLandingUrl.trim());
+      updateBridgeForm({
+        amazonAccount: { country: result.country, accountName: result.accountName, tier: result.tier },
+        amazonLandingUrl: '',
+      });
+    } catch (err) {
+      // A rejected code cannot be retried; the next attempt starts a fresh sign-in.
+      updateBridgeForm({ amazonLoginId: '' });
+      setAmazonError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setAmazonBusy(null);
+    }
+  };
+
   // Opens the MusicKit sign-in as an in-portal modal (iframe), not a new tab.
   const handleAppleMusicSignIn = (): void => {
     setAppleAuthOpen(true);
@@ -2361,6 +2447,10 @@ export default function ContentView(): JSX.Element {
     }
     if (provider === 'soundcloud') {
       if (bridgeForm.soundcloudOauthToken.trim()) payload.soundcloudOauthToken = bridgeForm.soundcloudOauthToken.trim();
+    }
+    if (provider === 'amazonmusic' && bridgeForm.amazonLoginId) {
+      // Without it the server keeps the account's existing registration (editing a label).
+      payload.amazonMusicLoginId = bridgeForm.amazonLoginId;
     }
     try {
       const { bridge } = await createSpotifyBridge(payload);
@@ -3893,6 +3983,7 @@ export default function ContentView(): JSX.Element {
               { id: 'spotify' as const, name: t('content.bridge.providerNames.spotify') },
               { id: 'applemusic' as const, name: t('content.bridge.providerNames.applemusic') },
               { id: 'tidal' as const, name: t('content.bridge.providerNames.tidal') },
+              { id: 'amazonmusic' as const, name: t('content.bridge.providerNames.amazonmusic') },
               { id: 'ytmusic' as const, name: t('content.bridge.providerNames.ytmusic') },
               { id: 'youtube' as const, name: t('content.bridge.providerNames.youtube') },
               { id: 'deezer' as const, name: t('content.bridge.providerNames.deezer') },
@@ -4128,6 +4219,7 @@ export default function ContentView(): JSX.Element {
         const PROVIDERS: Array<{ id: BridgeFormState['provider']; name: string }> = [
           { id: 'applemusic', name: t('content.bridge.providerNames.applemusic') },
           { id: 'tidal', name: t('content.bridge.providerNames.tidal') },
+          { id: 'amazonmusic', name: t('content.bridge.providerNames.amazonmusic') },
           { id: 'ytmusic', name: t('content.bridge.providerNames.ytmusic') },
           { id: 'youtube', name: t('content.bridge.providerNames.youtube') },
           { id: 'deezer', name: t('content.bridge.providerNames.deezer') },
@@ -4164,6 +4256,10 @@ export default function ContentView(): JSX.Element {
             { id: 'provider', label: t('content.bridge.providerStep') },
             { id: 'tidal-token', label: t('content.bridge.tokenStep') },
           ],
+          amazonmusic: [
+            { id: 'provider', label: t('content.bridge.providerStep') },
+            { id: 'amazon-signin', label: t('content.bridge.signInStep') },
+          ],
         };
         // The provider is already fixed when editing, or when the "+ Add service"
         // picker chose it — skip the provider-choice step in both cases and start
@@ -4188,6 +4284,8 @@ export default function ContentView(): JSX.Element {
               return bridgeForm.tidalAccessToken.trim().length > 0;
             case 'soundcloud-token':
               return bridgeForm.soundcloudOauthToken.trim().length > 0;
+            case 'amazon-signin':
+              return bridgeForm.amazonAccount !== null;
             default:
               return true;
           }
@@ -4205,6 +4303,140 @@ export default function ContentView(): JSX.Element {
           if (safeStep > 1) setBridgeWizStep(safeStep - 1);
         };
         const providerLabel = PROVIDERS.find((p) => p.id === bridgeForm.provider)?.name ?? bridgeForm.provider;
+        // Apple Music and Amazon Music license their streams through the same CDM files.
+        const renderWidevinePanel = (description: React.ReactNode): React.ReactNode => (
+        <div className="bridge-modal__wv">
+          <div className="bridge-modal__wv-head">
+            <div>
+              <div className="bridge-modal__wv-title">{t('content.bridge.apple.widevineTitle')}</div>
+              <div className="bridge-modal__wv-desc">{description}</div>
+            </div>
+            <span className={'bridge-modal__wv-badge tone-' + widevineTone}>
+              <span className="bridge-modal__wv-badge-dot" />
+              {widevineLabel}
+            </span>
+          </div>
+          {appleMusicWidevineStatus?.details?.length ? (
+            <ul className="bridge-modal__wv-details">
+              {appleMusicWidevineStatus.details.map((detail) => (
+                <li key={detail}>{detail}</li>
+              ))}
+            </ul>
+          ) : null}
+          <div className="bridge-modal__wv-files">
+            <div
+              className={
+                'bridge-modal__wv-file' +
+                (appleMusicPrivateKeyFile ? ' is-selected' : '') +
+                (appleMusicWidevineUploading ? ' is-disabled' : '')
+              }
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  (e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement | null)?.click();
+                }
+              }}
+              onClick={(e) => {
+                (e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement | null)?.click();
+              }}
+            >
+              <input
+                id="applemusic-private-key"
+                type="file"
+                accept=".pem"
+                onChange={(e) => setAppleMusicPrivateKeyFile(e.target.files?.[0] ?? null)}
+                disabled={appleMusicWidevineUploading}
+              />
+              <span className="bridge-modal__wv-fbadge">PK</span>
+              <div className="bridge-modal__wv-fbody">
+                <div className="bridge-modal__wv-fname">
+                  private_key.pem
+                  {appleMusicPrivateKeyFile ? (
+                    <span className="bridge-modal__wv-fpill">{t('content.bridge.apple.selected')}</span>
+                  ) : null}
+                  {!appleMusicPrivateKeyFile && showUploadedBadge(appleMusicWidevineUploadedAt.privateKey) ? (
+                    <span className="bridge-modal__wv-fpill is-ok">{t('content.bridge.apple.uploaded')}</span>
+                  ) : null}
+                </div>
+                <div className="bridge-modal__wv-fmeta">
+                  {appleMusicWidevineUploading
+                    ? t('content.bridge.apple.waiting')
+                    : appleMusicPrivateKeyFile
+                      ? appleMusicPrivateKeyFile.name
+                      : widevineFiles?.privateKey?.present
+                        ? t('content.bridge.apple.storedBytes', { bytes: formatBytes(widevineFiles.privateKey.bytes) })
+                        : t('content.bridge.apple.notStored')}
+                </div>
+                <div className="bridge-modal__wv-ftype">PEM</div>
+              </div>
+            </div>
+            <div
+              className={
+                'bridge-modal__wv-file' +
+                (appleMusicClientIdFile ? ' is-selected' : '') +
+                (appleMusicWidevineUploading ? ' is-disabled' : '')
+              }
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  (e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement | null)?.click();
+                }
+              }}
+              onClick={(e) => {
+                (e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement | null)?.click();
+              }}
+            >
+              <input
+                id="applemusic-client-id"
+                type="file"
+                accept=".bin,application/octet-stream"
+                onChange={(e) => setAppleMusicClientIdFile(e.target.files?.[0] ?? null)}
+                disabled={appleMusicWidevineUploading}
+              />
+              <span className="bridge-modal__wv-fbadge">CID</span>
+              <div className="bridge-modal__wv-fbody">
+                <div className="bridge-modal__wv-fname">
+                  client_id.bin
+                  {appleMusicClientIdFile ? <span className="bridge-modal__wv-fpill">{t('content.bridge.apple.selected')}</span> : null}
+                  {!appleMusicClientIdFile && showUploadedBadge(appleMusicWidevineUploadedAt.clientId) ? (
+                    <span className="bridge-modal__wv-fpill is-ok">{t('content.bridge.apple.uploaded')}</span>
+                  ) : null}
+                </div>
+                <div className="bridge-modal__wv-fmeta">
+                  {appleMusicWidevineUploading
+                    ? t('content.bridge.apple.waiting')
+                    : appleMusicClientIdFile
+                      ? appleMusicClientIdFile.name
+                      : widevineFiles?.clientId?.present
+                        ? t('content.bridge.apple.storedBytes', { bytes: formatBytes(widevineFiles.clientId.bytes) })
+                        : t('content.bridge.apple.notStored')}
+                </div>
+                <div className="bridge-modal__wv-ftype">BIN</div>
+              </div>
+            </div>
+          </div>
+          <div className="bridge-modal__wv-actions">
+            <button
+              type="button"
+              className="bridge-modal__btn"
+              onClick={() => void refreshAppleMusicWidevine()}
+              disabled={appleMusicWidevineLoading || appleMusicWidevineUploading}
+            >
+              {t('content.bridge.apple.refreshStatus')}
+            </button>
+            <button
+              type="button"
+              className="bridge-modal__btn is-primary"
+              onClick={() => void uploadAppleMusicWidevineFiles()}
+              disabled={appleMusicWidevineUploading || (!appleMusicPrivateKeyFile && !appleMusicClientIdFile)}
+            >
+              {appleMusicWidevineUploading ? t('content.bridge.apple.uploading') : t('content.bridge.apple.uploadFiles')}
+            </button>
+          </div>
+        </div>
+        );
         return (
         <Modal
           open
@@ -4362,6 +4594,14 @@ export default function ContentView(): JSX.Element {
                       {t('content.bridge.tidal.desc')}
                     </p>
                   )}
+                  {bridgeForm.provider === 'amazonmusic' && (
+                    <>
+                      <p className="bridge-modal__provider-detail-desc">
+                        {t('content.bridge.amazon.desc')}
+                      </p>
+                      <span className="bridge-modal__provider-req">{t('content.bridge.amazon.req')}</span>
+                    </>
+                  )}
                   {bridgeForm.provider === 'youtube' && (
                     <>
                       <p className="bridge-modal__provider-detail-desc">
@@ -4513,141 +4753,11 @@ export default function ContentView(): JSX.Element {
                       rows={4}
                     />
                   </div>
-                  <div className="bridge-modal__wv">
-                    <div className="bridge-modal__wv-head">
-                      <div>
-                        <div className="bridge-modal__wv-title">{t('content.bridge.apple.widevineTitle')}</div>
-                        <div className="bridge-modal__wv-desc">
-                          <Trans i18nKey="content.bridge.apple.widevineDesc">
-                            Required for Apple Music DRM playback. Stored locally under <code>data/widevine_cdm</code>.
-                          </Trans>
-                        </div>
-                      </div>
-                      <span className={'bridge-modal__wv-badge tone-' + widevineTone}>
-                        <span className="bridge-modal__wv-badge-dot" />
-                        {widevineLabel}
-                      </span>
-                    </div>
-                    {appleMusicWidevineStatus?.details?.length ? (
-                      <ul className="bridge-modal__wv-details">
-                        {appleMusicWidevineStatus.details.map((detail) => (
-                          <li key={detail}>{detail}</li>
-                        ))}
-                      </ul>
-                    ) : null}
-                    <div className="bridge-modal__wv-files">
-                      <div
-                        className={
-                          'bridge-modal__wv-file' +
-                          (appleMusicPrivateKeyFile ? ' is-selected' : '') +
-                          (appleMusicWidevineUploading ? ' is-disabled' : '')
-                        }
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            (e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement | null)?.click();
-                          }
-                        }}
-                        onClick={(e) => {
-                          (e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement | null)?.click();
-                        }}
-                      >
-                        <input
-                          id="applemusic-private-key"
-                          type="file"
-                          accept=".pem"
-                          onChange={(e) => setAppleMusicPrivateKeyFile(e.target.files?.[0] ?? null)}
-                          disabled={appleMusicWidevineUploading}
-                        />
-                        <span className="bridge-modal__wv-fbadge">PK</span>
-                        <div className="bridge-modal__wv-fbody">
-                          <div className="bridge-modal__wv-fname">
-                            private_key.pem
-                            {appleMusicPrivateKeyFile ? (
-                              <span className="bridge-modal__wv-fpill">{t('content.bridge.apple.selected')}</span>
-                            ) : null}
-                            {!appleMusicPrivateKeyFile && showUploadedBadge(appleMusicWidevineUploadedAt.privateKey) ? (
-                              <span className="bridge-modal__wv-fpill is-ok">{t('content.bridge.apple.uploaded')}</span>
-                            ) : null}
-                          </div>
-                          <div className="bridge-modal__wv-fmeta">
-                            {appleMusicWidevineUploading
-                              ? t('content.bridge.apple.waiting')
-                              : appleMusicPrivateKeyFile
-                                ? appleMusicPrivateKeyFile.name
-                                : widevineFiles?.privateKey?.present
-                                  ? t('content.bridge.apple.storedBytes', { bytes: formatBytes(widevineFiles.privateKey.bytes) })
-                                  : t('content.bridge.apple.notStored')}
-                          </div>
-                          <div className="bridge-modal__wv-ftype">PEM</div>
-                        </div>
-                      </div>
-                      <div
-                        className={
-                          'bridge-modal__wv-file' +
-                          (appleMusicClientIdFile ? ' is-selected' : '') +
-                          (appleMusicWidevineUploading ? ' is-disabled' : '')
-                        }
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={(e) => {
-                          if (e.key === 'Enter' || e.key === ' ') {
-                            (e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement | null)?.click();
-                          }
-                        }}
-                        onClick={(e) => {
-                          (e.currentTarget.querySelector('input[type="file"]') as HTMLInputElement | null)?.click();
-                        }}
-                      >
-                        <input
-                          id="applemusic-client-id"
-                          type="file"
-                          accept=".bin,application/octet-stream"
-                          onChange={(e) => setAppleMusicClientIdFile(e.target.files?.[0] ?? null)}
-                          disabled={appleMusicWidevineUploading}
-                        />
-                        <span className="bridge-modal__wv-fbadge">CID</span>
-                        <div className="bridge-modal__wv-fbody">
-                          <div className="bridge-modal__wv-fname">
-                            client_id.bin
-                            {appleMusicClientIdFile ? <span className="bridge-modal__wv-fpill">{t('content.bridge.apple.selected')}</span> : null}
-                            {!appleMusicClientIdFile && showUploadedBadge(appleMusicWidevineUploadedAt.clientId) ? (
-                              <span className="bridge-modal__wv-fpill is-ok">{t('content.bridge.apple.uploaded')}</span>
-                            ) : null}
-                          </div>
-                          <div className="bridge-modal__wv-fmeta">
-                            {appleMusicWidevineUploading
-                              ? t('content.bridge.apple.waiting')
-                              : appleMusicClientIdFile
-                                ? appleMusicClientIdFile.name
-                                : widevineFiles?.clientId?.present
-                                  ? t('content.bridge.apple.storedBytes', { bytes: formatBytes(widevineFiles.clientId.bytes) })
-                                  : t('content.bridge.apple.notStored')}
-                          </div>
-                          <div className="bridge-modal__wv-ftype">BIN</div>
-                        </div>
-                      </div>
-                    </div>
-                    <div className="bridge-modal__wv-actions">
-                      <button
-                        type="button"
-                        className="bridge-modal__btn"
-                        onClick={() => void refreshAppleMusicWidevine()}
-                        disabled={appleMusicWidevineLoading || appleMusicWidevineUploading}
-                      >
-                        {t('content.bridge.apple.refreshStatus')}
-                      </button>
-                      <button
-                        type="button"
-                        className="bridge-modal__btn is-primary"
-                        onClick={() => void uploadAppleMusicWidevineFiles()}
-                        disabled={appleMusicWidevineUploading || (!appleMusicPrivateKeyFile && !appleMusicClientIdFile)}
-                      >
-                        {appleMusicWidevineUploading ? t('content.bridge.apple.uploading') : t('content.bridge.apple.uploadFiles')}
-                      </button>
-                    </div>
-                  </div>
+                  {renderWidevinePanel(
+                    <Trans i18nKey="content.bridge.apple.widevineDesc">
+                      Required for Apple Music DRM playback. Stored locally under <code>data/widevine_cdm</code>.
+                    </Trans>,
+                  )}
                 </div>
               </div>
             )}
@@ -4802,6 +4912,108 @@ export default function ContentView(): JSX.Element {
                       maxLength={2}
                     />
                   </div>
+                </div>
+              </div>
+            )}
+
+            {currentStepId === 'amazon-signin' && (
+              <div className="bridge-modal__panel">
+                <div className="bridge-modal__panel-title">{t('content.bridge.amazon.title')}</div>
+                <p className="bridge-modal__panel-desc">{t('content.bridge.amazon.descLong')}</p>
+                <div className="bridge-modal__stack">
+                  {bridgeForm.amazonAccount ? (
+                    <div className="bridge-modal__callout">
+                      <svg className="bridge-modal__callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12" />
+                      </svg>
+                      <div className="bridge-modal__callout-body">
+                        <p>
+                          <strong>
+                            {bridgeForm.amazonAccount.accountName
+                              ? t('content.bridge.amazon.signedInAs', { name: bridgeForm.amazonAccount.accountName })
+                              : t('content.bridge.amazon.signedIn')}
+                          </strong>
+                          {bridgeForm.amazonAccount.tier ? ` · ${t(`content.bridge.amazon.tier.${bridgeForm.amazonAccount.tier}`)}` : ''}
+                          {bridgeForm.amazonAccount.country ? ` · ${bridgeForm.amazonAccount.country}` : ''}
+                        </p>
+                        {bridgeForm.amazonAccount.tier && bridgeForm.amazonAccount.tier !== 'unlimited' ? (
+                          <p>{t(`content.bridge.amazon.tierNote.${bridgeForm.amazonAccount.tier}`)}</p>
+                        ) : null}
+                        <p>
+                          <button
+                            type="button"
+                            className="bridge-modal__btn"
+                            onClick={() => updateBridgeForm({ amazonAccount: null, amazonLoginId: '', amazonLandingUrl: '' })}
+                            disabled={bridgeSubmitting}
+                          >
+                            {t('content.bridge.amazon.signInAgain')}
+                          </button>
+                        </p>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="bridge-modal__field">
+                        <label className="bridge-modal__label" htmlFor="bridge-amazon-country">
+                          {t('content.bridge.amazon.countryLabel')}
+                        </label>
+                        <select
+                          id="bridge-amazon-country"
+                          className="bridge-modal__input"
+                          value={bridgeForm.amazonCountry}
+                          onChange={(e) => updateBridgeForm({ amazonCountry: e.target.value, amazonLoginId: '' })}
+                          disabled={amazonBusy !== null}
+                        >
+                          {(amazonStorefronts.length ? amazonStorefronts : [{ country: bridgeForm.amazonCountry, name: bridgeForm.amazonCountry }]).map((s) => (
+                            <option key={s.country} value={s.country}>
+                              {s.name}
+                            </option>
+                          ))}
+                        </select>
+                        <span className="bridge-modal__help">{t('content.bridge.amazon.countryHelp')}</span>
+                      </div>
+                      <div className="bridge-modal__field">
+                        <button
+                          type="button"
+                          className="bridge-modal__btn is-primary"
+                          onClick={() => void handleAmazonSignInStart()}
+                          disabled={amazonBusy !== null}
+                        >
+                          {t('content.bridge.amazon.openSignIn')}
+                        </button>
+                        <span className="bridge-modal__help">{t('content.bridge.amazon.openHint')}</span>
+                      </div>
+                      {bridgeForm.amazonLoginId ? (
+                        <div className="bridge-modal__field">
+                          <label className="bridge-modal__label" htmlFor="bridge-amazon-landing">
+                            {t('content.bridge.amazon.pasteLabel')}
+                          </label>
+                          <textarea
+                            id="bridge-amazon-landing"
+                            className="bridge-modal__input is-mono"
+                            value={bridgeForm.amazonLandingUrl}
+                            onChange={(e) => updateBridgeForm({ amazonLandingUrl: e.target.value })}
+                            placeholder="https://www.amazon.com/ap/maplanding?…"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            autoCapitalize="off"
+                            spellCheck={false}
+                            rows={3}
+                          />
+                          <button
+                            type="button"
+                            className="bridge-modal__btn is-primary"
+                            onClick={() => void handleAmazonSignInFinish()}
+                            disabled={amazonBusy !== null || !bridgeForm.amazonLandingUrl.trim()}
+                          >
+                            {amazonBusy === 'finish' ? t('content.bridge.amazon.confirming') : t('content.bridge.amazon.confirm')}
+                          </button>
+                        </div>
+                      ) : null}
+                    </>
+                  )}
+                  {amazonError ? <p className="bridge-modal__help is-error" role="alert">{amazonError}</p> : null}
+                  {renderWidevinePanel(t('content.bridge.amazon.widevineDesc'))}
                 </div>
               </div>
             )}

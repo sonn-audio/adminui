@@ -361,6 +361,8 @@ export type SpotifyBridgeConfig = {
   tidalCountryCode?: string;
   youtubeApiKey?: string;
   soundcloudOauthToken?: string;
+  /** Present once an Amazon Music account has signed in; the rest of the registration stays server-side in use. */
+  amazonMusic?: { country?: string; accountName?: string; tier?: AmazonMusicTier };
   registerAll?: boolean;
   mode?: 'source' | 'sink';
 };
@@ -381,6 +383,8 @@ export type CreateSpotifyBridgePayload = {
   tidalCountryCode?: string;
   youtubeApiKey?: string;
   soundcloudOauthToken?: string;
+  /** A finished Amazon Music sign-in (see finishAmazonMusicLogin); the server collects its registration. */
+  amazonMusicLoginId?: string;
   registerAll?: boolean;
   mode?: 'source' | 'sink';
 };
@@ -395,6 +399,48 @@ export async function createSpotifyBridge(payload: CreateSpotifyBridgePayload): 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
     errorMessage: 'Failed to add streaming service',
+  });
+}
+
+export type AmazonMusicTier = 'unlimited' | 'prime' | 'free';
+
+export type AmazonMusicStorefront = { country: string; name: string };
+
+export type AmazonMusicSignedIn = {
+  ok: true;
+  loginId: string;
+  country: string;
+  accountName?: string;
+  tier: AmazonMusicTier;
+};
+
+export async function fetchAmazonMusicStorefronts(): Promise<AmazonMusicStorefront[]> {
+  const { storefronts } = await requestJson<{ storefronts: AmazonMusicStorefront[] }>(
+    `${API_BASE}/amazonmusic/storefronts`,
+    { errorMessage: 'Failed to load Amazon Music countries' },
+  );
+  return storefronts;
+}
+
+/**
+ * Amazon's sign-in cannot redirect back here, so it is two steps: this hands out the page to
+ * sign in on, and {@link finishAmazonMusicLogin} takes the address that sign-in ends on.
+ */
+export async function startAmazonMusicLogin(country: string): Promise<{ loginId: string; url: string }> {
+  return requestJson(`${API_BASE}/amazonmusic/login/start`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ country }),
+    errorMessage: 'Failed to start the Amazon sign-in',
+  });
+}
+
+export async function finishAmazonMusicLogin(loginId: string, url: string): Promise<AmazonMusicSignedIn> {
+  return requestJson(`${API_BASE}/amazonmusic/login/finish`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ loginId, url }),
+    errorMessage: 'Amazon did not accept this sign-in',
   });
 }
 

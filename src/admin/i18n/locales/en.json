@@ -545,6 +545,7 @@
       "tokenStep": "Token",
       "cookieStep": "Cookie",
       "apiKeyStep": "API key",
+      "signInStep": "Sign in",
       "providerTitle": "Choose provider",
       "providerDesc": "Pick which streaming service you want to add.",
       "providerNames": {
@@ -555,7 +556,8 @@
         "youtube": "YouTube",
         "deezer": "Deezer",
         "soundcloud": "SoundCloud",
-        "musicassistant": "Music Assistant"
+        "musicassistant": "Music Assistant",
+        "amazonmusic": "Amazon Music"
       },
       "detailKicker": "Service setup details",
       "nameLabel": "Display name",
@@ -671,6 +673,32 @@
         "descLong": "Paste a token from your device authorization flow.",
         "placeholder": "Access token",
         "countryLabel": "Country code"
+      },
+      "amazon": {
+        "desc": "Browse and play Amazon Music: search the catalogue, your own and followed playlists. Lossless with Unlimited.",
+        "req": "Amazon Music account · Widevine CDM files",
+        "title": "Sign in to Amazon",
+        "descLong": "Amazon cannot send you back here after signing in, so this takes three steps: open the sign-in, sign in as usual, then copy the address of the page Amazon shows afterwards and paste it below.",
+        "countryLabel": "Amazon Music country",
+        "countryHelp": "The store your Amazon account belongs to.",
+        "openSignIn": "Open Amazon sign-in",
+        "openHint": "Opens in a new tab. You may be asked for your password twice, a captcha or a one-time code.",
+        "pasteLabel": "Address after signing in",
+        "confirm": "Confirm sign-in",
+        "confirming": "Signing in…",
+        "signedIn": "Signed in",
+        "signedInAs": "Signed in as {{name}}",
+        "signInAgain": "Sign in with another account",
+        "tier": {
+          "unlimited": "Unlimited",
+          "prime": "Prime",
+          "free": "Free"
+        },
+        "tierNote": {
+          "prime": "Prime plays the lossy (Opus) streams; lossless needs Amazon Music Unlimited.",
+          "free": "This account has no Amazon Music subscription, so most tracks will not play."
+        },
+        "widevineDesc": "Required for Amazon Music playback — the same files Apple Music uses. Stored locally under data/widevine_cdm."
       },
       "feedback": {
         "added": "Bridge added",

@@ -545,6 +545,7 @@
       "tokenStep": "Token",
       "cookieStep": "Cookie",
       "apiKeyStep": "API-Schlüssel",
+      "signInStep": "Anmelden",
       "providerTitle": "Anbieter wählen",
       "providerDesc": "Wähle, welchen Streaming-Dienst du hinzufügen möchtest.",
       "providerNames": {
@@ -555,7 +556,8 @@
         "youtube": "YouTube",
         "deezer": "Deezer",
         "soundcloud": "SoundCloud",
-        "musicassistant": "Music Assistant"
+        "musicassistant": "Music Assistant",
+        "amazonmusic": "Amazon Music"
       },
       "detailKicker": "Dienst-Setup-Details",
       "nameLabel": "Anzeigename",
@@ -671,6 +673,32 @@
         "descLong": "Token aus dem Geräte-Autorisierungs-Flow einfügen.",
         "placeholder": "Access-Token",
         "countryLabel": "Ländercode"
+      },
+      "amazon": {
+        "desc": "Amazon Music durchsuchen und abspielen: Katalogsuche, eigene und gefolgte Playlists. Verlustfrei mit Unlimited.",
+        "req": "Amazon-Music-Konto · Widevine-CDM-Dateien",
+        "title": "Bei Amazon anmelden",
+        "descLong": "Amazon kann nach der Anmeldung nicht hierher zurückleiten, daher drei Schritte: Anmeldung öffnen, wie gewohnt anmelden, dann die Adresse der Seite, die Amazon danach zeigt, kopieren und unten einfügen.",
+        "countryLabel": "Amazon-Music-Land",
+        "countryHelp": "Der Store, zu dem dein Amazon-Konto gehört.",
+        "openSignIn": "Amazon-Anmeldung öffnen",
+        "openHint": "Öffnet sich in einem neuen Tab. Eventuell wirst du zweimal nach dem Passwort, einem Captcha oder einem Einmalcode gefragt.",
+        "pasteLabel": "Adresse nach der Anmeldung",
+        "confirm": "Anmeldung bestätigen",
+        "confirming": "Anmelden…",
+        "signedIn": "Angemeldet",
+        "signedInAs": "Angemeldet als {{name}}",
+        "signInAgain": "Mit einem anderen Konto anmelden",
+        "tier": {
+          "unlimited": "Unlimited",
+          "prime": "Prime",
+          "free": "Kostenlos"
+        },
+        "tierNote": {
+          "prime": "Prime spielt die verlustbehafteten (Opus-)Streams; verlustfrei erfordert Amazon Music Unlimited.",
+          "free": "Dieses Konto hat kein Amazon-Music-Abo, daher werden die meisten Titel nicht abgespielt."
+        },
+        "widevineDesc": "Erforderlich für die Wiedergabe von Amazon Music — dieselben Dateien wie bei Apple Music. Lokal gespeichert unter data/widevine_cdm."
       },
       "feedback": {
         "added": "Bridge hinzugefügt",
