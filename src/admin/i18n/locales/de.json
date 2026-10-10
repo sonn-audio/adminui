@@ -677,6 +677,8 @@
       "amazon": {
         "desc": "Amazon Music durchsuchen und abspielen: Katalogsuche, eigene und gefolgte Playlists. Verlustfrei mit Unlimited.",
         "req": "Amazon-Music-Konto · Widevine-CDM-Dateien",
+        "experimental": "Experimentell. ",
+        "experimentalText": "Anmeldung und Wiedergabe wurden noch nicht mit einem echten Konto getestet. Wenn etwas nicht funktioniert, melde es bitte mit den Logs auf GitHub.",
         "title": "Bei Amazon anmelden",
         "descLong": "Amazon kann nach der Anmeldung nicht hierher zurückleiten, daher drei Schritte: Anmeldung öffnen, wie gewohnt anmelden, dann die Adresse der Seite, die Amazon danach zeigt, kopieren und unten einfügen.",
         "countryLabel": "Amazon-Music-Land",

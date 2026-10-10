@@ -677,6 +677,8 @@
       "amazon": {
         "desc": "Browse and play Amazon Music: search the catalogue, your own and followed playlists. Lossless with Unlimited.",
         "req": "Amazon Music account · Widevine CDM files",
+        "experimental": "Experimental. ",
+        "experimentalText": "Sign-in and playback have not yet been tested with a real account. If something does not work, please report it on GitHub with the logs.",
         "title": "Sign in to Amazon",
         "descLong": "Amazon cannot send you back here after signing in, so this takes three steps: open the sign-in, sign in as usual, then copy the address of the page Amazon shows afterwards and paste it below.",
         "countryLabel": "Amazon Music country",

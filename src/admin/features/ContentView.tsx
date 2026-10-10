@@ -4600,6 +4600,17 @@ export default function ContentView(): JSX.Element {
                         {t('content.bridge.amazon.desc')}
                       </p>
                       <span className="bridge-modal__provider-req">{t('content.bridge.amazon.req')}</span>
+                      <div className="bridge-modal__callout">
+                        <svg className="bridge-modal__callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                          <circle cx="12" cy="12" r="10" />
+                          <path d="M12 16v-4M12 8h.01" />
+                        </svg>
+                        <div className="bridge-modal__callout-body">
+                          <p>
+                            <strong>{t('content.bridge.amazon.experimental')}</strong>{t('content.bridge.amazon.experimentalText')}
+                          </p>
+                        </div>
+                      </div>
                     </>
                   )}
                   {bridgeForm.provider === 'youtube' && (
