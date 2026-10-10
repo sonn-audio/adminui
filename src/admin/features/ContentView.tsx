@@ -156,6 +156,7 @@ type LineInFormState = {
   autoPlayZoneId: string;
   draftId: string;
   sendspinClientId: string;
+  dlnaPublishName: string;
   ingestSampleRate: string;
   ingestChannels: string;
   ingestBitDepth: string;
@@ -187,7 +188,7 @@ const LINEIN_ICON_OPTIONS: Array<{ value: LineInIconType; labelKey: string }> = 
   { value: LineInIconType.TurnTable, labelKey: 'content.linein.iconOptions.turntable' },
 ];
 
-type LineInSourceType = 'ingest' | 'sendspin';
+type LineInSourceType = 'ingest' | 'sendspin' | 'dlna';
 
 function describeLineInIcon(iconType: LineInIconType): string {
   switch (iconType) {
@@ -217,6 +218,7 @@ function describeLineInIcon(iconType: LineInIconType): string {
 function describeLineInSource(sourceType: LineInSourceType): string {
   if (sourceType === 'ingest') return 'Ingest (streamed input)';
   if (sourceType === 'sendspin') return 'Sendspin';
+  if (sourceType === 'dlna') return 'DLNA';
   return sourceType;
 }
 
@@ -521,6 +523,7 @@ const createEmptyLineInForm = (): LineInFormState => ({
   autoPlayZoneId: '',
   draftId: createLineInId(),
   sendspinClientId: '',
+  dlnaPublishName: '',
   ingestSampleRate: '',
   ingestChannels: '',
   ingestBitDepth: '',
@@ -1753,6 +1756,7 @@ export default function ContentView(): JSX.Element {
       const rawSource = input.source ?? {};
       const sourceRecord = rawSource as Record<string, unknown>;
       const sendspinClientId = typeof sourceRecord.clientId === 'string' ? sourceRecord.clientId : '';
+      const dlnaPublishName = typeof sourceRecord.publishName === 'string' ? sourceRecord.publishName : '';
       const ingestCodec =
         typeof sourceRecord.codec === 'string'
           ? sourceRecord.codec
@@ -1807,6 +1811,7 @@ export default function ContentView(): JSX.Element {
         autoPlayZoneId,
         draftId: input.id ?? createLineInId(),
         sendspinClientId,
+        dlnaPublishName,
         ingestSampleRate,
         ingestChannels,
         ingestBitDepth,
@@ -2474,6 +2479,11 @@ export default function ContentView(): JSX.Element {
         } else if ('clientId' in nextSource) {
           delete nextSource.clientId;
         }
+        if (lineInForm.sourceType === 'dlna' && lineInForm.dlnaPublishName.trim()) {
+          nextSource.publishName = lineInForm.dlnaPublishName.trim();
+        } else {
+          delete nextSource.publishName;
+        }
         if (lineInForm.sourceType !== 'sendspin') {
           delete nextSource.vad_threshold_db;
           delete nextSource.vad_hold_ms;
@@ -2526,6 +2536,9 @@ export default function ContentView(): JSX.Element {
           if (holdMs != null) {
             nextSource.vad_hold_ms = holdMs;
           }
+        }
+        if (lineInForm.sourceType === 'dlna' && lineInForm.dlnaPublishName.trim()) {
+          nextSource.publishName = lineInForm.dlnaPublishName.trim();
         }
         nextInputs.push({
           id: nextId,
@@ -4955,6 +4968,7 @@ export default function ContentView(): JSX.Element {
                     >
                       <option value="ingest">{t('content.linein.sourceLabels.ingestOption')}</option>
                       <option value="sendspin">{t('content.linein.sourceLabels.sendspin')}</option>
+                      <option value="dlna">{t('content.linein.sourceLabels.dlna')}</option>
                     </select>
                     <span className="linein-modal__help">{t('content.linein.modal.inputMethodHelp')}</span>
                   </div>
@@ -5076,6 +5090,25 @@ export default function ContentView(): JSX.Element {
                         </div>
                       </div>
                       <span className="linein-modal__help">{t('content.linein.modal.captureHelp')}</span>
+                    </>
+                  )}
+
+                  {lineInForm.sourceType === 'dlna' && (
+                    <>
+                      <div className="linein-modal__group-label">{t('content.linein.modal.dlna')}</div>
+                      <p className="linein-modal__copy">{t('content.linein.modal.dlnaCopy')}</p>
+                      <div className="linein-modal__field">
+                        <label className="linein-modal__field-label" htmlFor="linein-dlna-name">{t('content.linein.modal.dlnaPublishName')}</label>
+                        <input
+                          id="linein-dlna-name"
+                          className="linein-modal__input"
+                          type="text"
+                          value={lineInForm.dlnaPublishName}
+                          placeholder={lineInForm.name.trim() || t('content.linein.modal.namePlaceholder')}
+                          onChange={(e) => setLineInForm((prev) => ({ ...prev, dlnaPublishName: e.target.value }))}
+                        />
+                        <span className="linein-modal__help">{t('content.linein.modal.dlnaHelp')}</span>
+                      </div>
                     </>
                   )}
 

@@ -371,7 +371,8 @@
       "sourceLabels": {
         "ingest": "Ingest (streamed input)",
         "sendspin": "Sendspin",
-        "ingestOption": "Manual ingest"
+        "ingestOption": "Manual ingest",
+        "dlna": "DLNA"
       },
       "modal": {
         "newEyebrow": "New line-in source",
@@ -409,6 +410,10 @@
         "autoplayHelp": "Starts this Sendspin input automatically in the selected zone when signal appears.",
         "captureSettings": "Capture settings",
         "captureHelp": "Optional controls for when Sendspin starts/stops streaming on silence.",
+        "dlna": "DLNA",
+        "dlnaCopy": "This input shows up on the network as a DLNA renderer. Whatever a control point casts at it, for example a WiiM with DLNA Out, becomes this input's audio.",
+        "dlnaPublishName": "Name on the network",
+        "dlnaHelp": "Leave empty to use the input name.",
         "manualIngest": "Manual ingest",
         "manualCopy": "Manual ingest supports WebSocket and TCP per line-in.",
         "wsIngest": "WebSocket ingest",
