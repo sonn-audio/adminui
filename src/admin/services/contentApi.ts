@@ -359,6 +359,21 @@ export type SpotifyBridgeConfig = {
   deezerArl?: string;
   tidalAccessToken?: string;
   tidalCountryCode?: string;
+  tidalClientId?: string;
+  tidalClientSecret?: string;
+  tidalQuality?: TidalQuality;
+  /** Present once a Tidal account has signed in; the tokens in it are only ever used server-side. */
+  tidal?: {
+    userId?: string;
+    userName?: string;
+    countryCode?: string;
+    refreshError?: string;
+    flow?: 'pkce' | 'device';
+    /** `THIRD_PARTY` for an app from developer.tidal.com, which TIDAL gives only previews. */
+    accessTier?: string;
+    /** Why the last track played as a 30-second preview, when it did. */
+    previewReason?: string;
+  };
   youtubeApiKey?: string;
   soundcloudOauthToken?: string;
   /** Present once an Amazon Music account has signed in; the rest of the registration stays server-side in use. */
@@ -381,6 +396,11 @@ export type CreateSpotifyBridgePayload = {
   deezerArl?: string;
   tidalAccessToken?: string;
   tidalCountryCode?: string;
+  tidalClientId?: string;
+  tidalClientSecret?: string;
+  tidalQuality?: TidalQuality;
+  /** A finished Tidal sign-in (see startTidalLogin); the server collects its session. */
+  tidalLoginId?: string;
   youtubeApiKey?: string;
   soundcloudOauthToken?: string;
   /** A finished Amazon Music sign-in (see finishAmazonMusicLogin); the server collects its registration. */
@@ -399,6 +419,86 @@ export async function createSpotifyBridge(payload: CreateSpotifyBridgePayload): 
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
     errorMessage: 'Failed to add streaming service',
+  });
+}
+
+export type TidalQuality = 'LOW' | 'HIGH' | 'LOSSLESS' | 'HI_RES_LOSSLESS';
+
+/** A browser sign-in at login.tidal.com, or a code for link.tidal.com (device-capable clients only). */
+export type TidalLoginMode = 'browser' | 'device';
+
+export type TidalLoginStart =
+  | {
+      ok: true;
+      loginId: string;
+      mode: 'browser';
+      authorizeUrl: string;
+      /** The redirect URI the app must have registered. */
+      redirectUri: string;
+      /** The server callback the public redirect page forwards to. */
+      callbackUrl: string;
+      expiresIn: number;
+    }
+  | {
+      ok: true;
+      loginId: string;
+      mode: 'device';
+      userCode: string;
+      verificationUri: string;
+      verificationUriComplete: string;
+      expiresIn: number;
+      interval: number;
+    };
+
+export type TidalLoginStatus =
+  | { state: 'pending' }
+  | { state: 'done'; userId?: string; userName?: string; countryCode?: string; accessTier?: string }
+  | { state: 'error'; error: string; message: string };
+
+/**
+ * Which Tidal app signs in when the form names none (the environment's, else sonn's own), and the
+ * redirect URI an app of your own must have registered.
+ */
+export async function fetchTidalClientStatus(): Promise<{ envConfigured: boolean; defaultClientId: string; redirectUri: string }> {
+  return requestJson(`${API_BASE}/tidal/client`, { errorMessage: 'Failed to read the Tidal client' });
+}
+
+export async function startTidalLogin(input: {
+  mode: TidalLoginMode;
+  serviceId?: string;
+  clientId?: string;
+  clientSecret?: string;
+}): Promise<TidalLoginStart> {
+  return requestJson(`${API_BASE}/tidal/login/start`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+    errorMessage: 'Failed to start the Tidal sign-in',
+  });
+}
+
+export async function fetchTidalLoginStatus(loginId: string): Promise<TidalLoginStatus> {
+  return requestJson(`${API_BASE}/tidal/login/status?loginId=${encodeURIComponent(loginId)}`, {
+    errorMessage: 'Failed to read the Tidal sign-in',
+  });
+}
+
+/** Finish a browser sign-in with the address the browser ended on, when it could not reach this server. */
+export async function finishTidalLogin(loginId: string, url: string): Promise<TidalLoginStatus> {
+  return requestJson(`${API_BASE}/tidal/login/finish`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ loginId, url }),
+    errorMessage: 'Tidal did not accept this sign-in',
+  });
+}
+
+export async function logoutTidal(input: { serviceId?: string; loginId?: string }): Promise<void> {
+  await requestOk(`${API_BASE}/tidal/logout`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+    errorMessage: 'Failed to sign out of Tidal',
   });
 }
 
