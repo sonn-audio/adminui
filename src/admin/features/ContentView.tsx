@@ -168,6 +168,8 @@ type BridgeFormState = {
     userName?: string;
     countryCode?: string;
     refreshError?: string;
+    /** What TIDAL last delivered when lower than the quality asked for (set by the server). */
+    deliveredQuality?: TidalQuality;
   } | null;
   youtubeApiKey: string;
   soundcloudOauthToken: string;
@@ -559,6 +561,11 @@ const createEmptyBridgeForm = (): BridgeFormState => ({
 });
 
 const TIDAL_QUALITIES: TidalQuality[] = ['LOW', 'HIGH', 'LOSSLESS', 'HI_RES_LOSSLESS'];
+
+/** Whether TIDAL delivered less than `asked`: some clients are capped below what they ask for. */
+function tidalDeliversLess(delivered: TidalQuality | undefined, asked: TidalQuality): delivered is TidalQuality {
+  return delivered !== undefined && TIDAL_QUALITIES.indexOf(delivered) < TIDAL_QUALITIES.indexOf(asked);
+}
 
 const createEmptyLineInForm = (): LineInFormState => ({
   name: '',
@@ -1905,6 +1912,7 @@ export default function ContentView(): JSX.Element {
               userName: bridge.tidal.userName,
               countryCode: bridge.tidal.countryCode,
               refreshError: bridge.tidal.refreshError,
+              deliveredQuality: bridge.tidal.deliveredQuality,
             }
           : null,
         youtubeApiKey: bridge.youtubeApiKey ?? '',
@@ -3839,6 +3847,15 @@ export default function ContentView(): JSX.Element {
                         {bridge.provider === 'tidal' && bridge.tidal?.refreshError ? (
                           <div className="content-list-row__meta content-warn">{t('content.bridge.tidal.rowSignInAgain')}</div>
                         ) : null}
+                        {bridge.provider === 'tidal' &&
+                        tidalDeliversLess(bridge.tidal?.deliveredQuality, bridge.tidalQuality ?? 'LOSSLESS') ? (
+                          <div className="content-list-row__meta content-warn">
+                            {t('content.bridge.tidal.rowDelivered', {
+                              delivered: t(`content.bridge.tidal.deliveredFormat.${bridge.tidal!.deliveredQuality}`),
+                              asked: t(`content.bridge.tidal.askedName.${bridge.tidalQuality ?? 'LOSSLESS'}`),
+                            })}
+                          </div>
+                        ) : null}
                       </div>
                       <div className="content-list-row__actions">
                         <button
@@ -5185,10 +5202,24 @@ export default function ContentView(): JSX.Element {
                     >
                       {TIDAL_QUALITIES.map((q) => (
                         <option key={q} value={q}>
-                          {t(`content.bridge.tidal.quality.${q}`)}
+                          {tidalDeliversLess(bridgeForm.tidalAccount?.deliveredQuality, q)
+                            ? t('content.bridge.tidal.qualityNotAvailable', { label: t(`content.bridge.tidal.quality.${q}`) })
+                            : t(`content.bridge.tidal.quality.${q}`)}
                         </option>
                       ))}
                     </select>
+                    {/*
+                      TIDAL caps some clients below what they ask for. The server records what came
+                      back and clears it once a track plays as asked, so the options stay selectable.
+                    */}
+                    {tidalDeliversLess(bridgeForm.tidalAccount?.deliveredQuality, bridgeForm.tidalQuality) ? (
+                      <span className="bridge-modal__help content-warn">
+                        {t('content.bridge.tidal.deliveredNote', {
+                          delivered: t(`content.bridge.tidal.deliveredFormat.${bridgeForm.tidalAccount!.deliveredQuality}`),
+                          asked: t(`content.bridge.tidal.askedName.${bridgeForm.tidalQuality}`),
+                        })}
+                      </span>
+                    ) : null}
                     <span className="bridge-modal__help">{t('content.bridge.tidal.qualityHelp')}</span>
                   </div>
                 </div>

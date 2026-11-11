@@ -373,6 +373,8 @@ export type SpotifyBridgeConfig = {
     accessTier?: string;
     /** Why the last track played as a 30-second preview, when it did. */
     previewReason?: string;
+    /** What TIDAL actually delivered for the last track, when lower than `tidalQuality`; unset once a track plays as asked. */
+    deliveredQuality?: TidalQuality;
   };
   youtubeApiKey?: string;
   soundcloudOauthToken?: string;

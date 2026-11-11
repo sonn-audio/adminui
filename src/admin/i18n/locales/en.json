@@ -700,7 +700,22 @@
           "LOSSLESS": "Lossless (FLAC 16-bit)",
           "HI_RES_LOSSLESS": "Hi-res (FLAC up to 24-bit/192 kHz)"
         },
-        "rowSignInAgain": "Tidal no longer accepts this sign-in. Sign in again."
+        "rowSignInAgain": "Tidal no longer accepts this sign-in. Sign in again.",
+        "qualityNotAvailable": "{{label}} (not available for this client)",
+        "deliveredNote": "TIDAL delivers {{delivered}} for this client, not {{asked}}.",
+        "rowDelivered": "Plays as {{delivered}}, not {{asked}}.",
+        "deliveredFormat": {
+          "LOW": "AAC 96 kbps",
+          "HIGH": "AAC 320 kbps",
+          "LOSSLESS": "FLAC 16-bit/44.1 kHz",
+          "HI_RES_LOSSLESS": "FLAC up to 24-bit/192 kHz"
+        },
+        "askedName": {
+          "LOW": "low quality",
+          "HIGH": "high quality",
+          "LOSSLESS": "lossless",
+          "HI_RES_LOSSLESS": "hi-res"
+        }
       },
       "amazon": {
         "desc": "Browse and play Amazon Music: search the catalogue, your own and followed playlists. Lossless with Unlimited.",
