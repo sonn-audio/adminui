@@ -2014,31 +2014,19 @@
   }
 }
 
+.bridge-modal__code-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
 .bridge-modal__code {
   font-family: var(--font-mono);
-  font-size: 22px;
+  font-size: 28px;
   letter-spacing: 0.18em;
   color: var(--text);
-}
-
-.bridge-modal__radio {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: var(--text-sm);
-  color: var(--text);
-  cursor: pointer;
-}
-
-.bridge-modal__advanced > summary {
-  cursor: pointer;
-  font-size: var(--text-sm);
-  color: var(--text-muted);
-  margin-bottom: 12px;
-}
-
-.bridge-modal__advanced[open] > summary {
-  color: var(--text);
+  user-select: all;
 }
 
 /* Fields */
@@ -3609,8 +3597,4 @@
 
 .bridge-modal__help.is-error {
   color: var(--danger);
-}
-
-.bridge-modal__help.is-warn {
-  color: var(--warning, #fbbf24);
 }

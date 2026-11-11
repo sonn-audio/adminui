@@ -36,7 +36,6 @@ import {
   fetchTidalClientStatus,
   startTidalLogin,
   fetchTidalLoginStatus,
-  finishTidalLogin,
   logoutTidal,
 } from '../services/contentApi';
 import type {
@@ -59,6 +58,7 @@ import {
   uploadAppleMusicWidevinePrivateKey,
   type AppleMusicWidevineStatus,
 } from '../services/appleMusicWidevineApi';
+import { copyText } from '../utils/clipboard';
 import { useGlobalAlert } from '../components/GlobalAlert';
 import { useConfirm } from '../components/ConfirmDialog';
 import InlineState from '../components/InlineState';
@@ -151,9 +151,13 @@ type BridgeFormState = {
   ytmusicCookie: string;
   ytmusicPoTokenUrl: string;
   deezerArl: string;
+  /**
+   * A token pasted by hand before sign-in existed. The form no longer offers it, but sends it back
+   * unchanged so saving such a service does not drop it; signing out clears it.
+   */
   tidalAccessToken: string;
   tidalCountryCode: string;
-  /** The Tidal app the sign-in runs as, when the server's environment supplies none. */
+  /** The Tidal client the device sign-in runs as, when the server's environment supplies none. */
   tidalClientId: string;
   tidalClientSecret: string;
   tidalQuality: TidalQuality;
@@ -164,8 +168,6 @@ type BridgeFormState = {
     userName?: string;
     countryCode?: string;
     refreshError?: string;
-    accessTier?: string;
-    previewReason?: string;
   } | null;
   youtubeApiKey: string;
   soundcloudOauthToken: string;
@@ -1903,8 +1905,6 @@ export default function ContentView(): JSX.Element {
               userName: bridge.tidal.userName,
               countryCode: bridge.tidal.countryCode,
               refreshError: bridge.tidal.refreshError,
-              accessTier: bridge.tidal.accessTier,
-              previewReason: bridge.tidal.previewReason,
             }
           : null,
         youtubeApiKey: bridge.youtubeApiKey ?? '',
@@ -2358,53 +2358,45 @@ export default function ContentView(): JSX.Element {
     }
   };
 
-  // Tidal: the browser sign-in (PKCE) goes through a public redirect page that forwards to this
-  // server, as Spotify's does; this page learns the outcome by polling. Where that forward cannot
-  // reach the server (a sign-in on a phone), the address the browser ended on is pasted here. The
-  // device code is for a client TIDAL allows that flow. The verifier, state and tokens stay
-  // server-side; this keeps only the login id.
-  const [tidalClientInfo, setTidalClientInfo] = React.useState<{
-    envConfigured: boolean;
-    defaultClientId: string;
-    redirectUri: string;
+  // Tidal: the device sign-in. The person approves a code at link.tidal.com, signing in as a TIDAL
+  // client allowed that flow: the one the server's environment names, else the client id and
+  // secret entered here (sent with the start, so they need not be saved first). The sign-in
+  // finishes elsewhere, so this page learns the outcome by polling. The tokens stay server-side;
+  // this keeps only the login id.
+  const [tidalEnvClient, setTidalEnvClient] = React.useState<boolean | null>(null);
+  const [tidalPending, setTidalPending] = React.useState<{
+    loginId: string;
+    userCode: string;
+    verificationUriComplete: string;
   } | null>(null);
-  const [tidalPending, setTidalPending] = React.useState<
-    | { loginId: string; mode: 'browser'; authorizeUrl: string; redirectUri: string }
-    | { loginId: string; mode: 'device'; userCode: string; verificationUriComplete: string }
-    | null
-  >(null);
-  const [tidalLandingUrl, setTidalLandingUrl] = React.useState('');
-  const [tidalBusy, setTidalBusy] = React.useState<'start' | 'finish' | 'signout' | null>(null);
-  const [tidalError, setTidalError] = React.useState<string | null>(null);
+  const [tidalBusy, setTidalBusy] = React.useState<'start' | 'signout' | null>(null);
+  const [tidalError, setTidalError] = React.useState<{ message: string; expired: boolean } | null>(null);
+  const [tidalCodeCopied, setTidalCodeCopied] = React.useState(false);
 
   React.useEffect(() => {
-    if (!bridgeModalOpen || bridgeForm.provider !== 'tidal' || tidalClientInfo) return;
+    if (!bridgeModalOpen || bridgeForm.provider !== 'tidal' || tidalEnvClient !== null) return;
     fetchTidalClientStatus()
-      .then(setTidalClientInfo)
-      .catch(() => setTidalClientInfo(null));
-  }, [bridgeModalOpen, bridgeForm.provider, tidalClientInfo]);
+      .then((info) => setTidalEnvClient(info.envConfigured))
+      // Unknown: ask for a client, which is what the server needs when its environment has none.
+      .catch(() => setTidalEnvClient(false));
+  }, [bridgeModalOpen, bridgeForm.provider, tidalEnvClient]);
 
   // A closed dialog abandons its sign-in; the server forgets it on its own.
   React.useEffect(() => {
     if (!bridgeModalOpen) {
       setTidalPending(null);
-      setTidalLandingUrl('');
       setTidalError(null);
+      setTidalCodeCopied(false);
     }
   }, [bridgeModalOpen]);
 
-  // updateBridgeForm only ever applies a patch to the latest state, so a poll started on an
-  // earlier render can call this safely.
-  const tidalLoginDone = (
-    loginId: string,
-    account: { userName?: string; countryCode?: string; accessTier?: string },
-  ): void => {
-    setTidalPending(null);
-    setTidalLandingUrl('');
-    updateBridgeForm({ tidalLoginId: loginId, tidalAccount: account });
-  };
+  const tidalClientReady =
+    tidalEnvClient === true || (bridgeForm.tidalClientId.trim() !== '' && bridgeForm.tidalClientSecret.trim() !== '');
+  // A stored session, or a token pasted by hand before sign-in existed: either way the account is
+  // linked, and signing out is how it gets replaced.
+  const tidalSignedIn = bridgeForm.tidalAccount !== null || bridgeForm.tidalAccessToken.trim() !== '';
 
-  // Both kinds of sign-in finish elsewhere (the other tab, the Tidal app): ask how it went.
+  // The sign-in finishes in the Tidal app or at link.tidal.com: ask how it went.
   React.useEffect(() => {
     if (!tidalPending) return;
     const { loginId } = tidalPending;
@@ -2414,10 +2406,16 @@ export default function ContentView(): JSX.Element {
         .then((status) => {
           if (stopped) return;
           if (status.state === 'done') {
-            tidalLoginDone(loginId, { userName: status.userName, countryCode: status.countryCode, accessTier: status.accessTier });
+            setTidalPending(null);
+            // updateBridgeForm only ever applies a patch to the latest state, so a poll started
+            // on an earlier render can call it safely.
+            updateBridgeForm({
+              tidalLoginId: loginId,
+              tidalAccount: { userName: status.userName, countryCode: status.countryCode },
+            });
           } else if (status.state === 'error') {
             setTidalPending(null);
-            setTidalError(status.message);
+            setTidalError({ message: status.message, expired: status.error === 'expired' });
           }
         })
         .catch(() => {
@@ -2431,63 +2429,37 @@ export default function ContentView(): JSX.Element {
     // Keyed on the sign-in alone: one poll per sign-in, not one per render.
   }, [tidalPending]);
 
-  const handleTidalSignInStart = async (mode: 'browser' | 'device'): Promise<void> => {
-    // Opened before the request so no popup blocker sees it as unprompted.
-    const tab = mode === 'browser' ? window.open('about:blank', '_blank') : null;
+  const handleTidalSignInStart = async (): Promise<void> => {
     setTidalBusy('start');
     setTidalError(null);
-    setTidalLandingUrl('');
+    setTidalCodeCopied(false);
     try {
       const start = await startTidalLogin({
-        mode,
+        mode: 'device',
         serviceId: bridgeEditingId ?? undefined,
         clientId: bridgeForm.tidalClientId.trim() || undefined,
         clientSecret: bridgeForm.tidalClientSecret.trim() || undefined,
       });
-      if (start.mode === 'device') {
-        setTidalPending({ loginId: start.loginId, mode: 'device', userCode: start.userCode, verificationUriComplete: start.verificationUriComplete });
-        return;
-      }
-      setTidalPending({ loginId: start.loginId, mode: 'browser', authorizeUrl: start.authorizeUrl, redirectUri: start.redirectUri });
-      if (tab) {
-        tab.location.href = start.authorizeUrl;
-      } else {
-        window.open(start.authorizeUrl, '_blank', 'noopener');
-      }
+      setTidalPending({ loginId: start.loginId, userCode: start.userCode, verificationUriComplete: start.verificationUriComplete });
     } catch (err) {
-      tab?.close();
-      setTidalPending(null);
-      setTidalError(err instanceof Error ? err.message : String(err));
+      // The server passes on TIDAL's own words, e.g. that the client may not use this sign-in.
+      setTidalError({ message: err instanceof Error ? err.message : String(err), expired: false });
     } finally {
       setTidalBusy(null);
     }
   };
 
-  const handleTidalPasteFinish = async (): Promise<void> => {
-    if (!tidalPending || tidalPending.mode !== 'browser' || !tidalLandingUrl.trim()) return;
-    setTidalBusy('finish');
-    setTidalError(null);
-    try {
-      const status = await finishTidalLogin(tidalPending.loginId, tidalLandingUrl.trim());
-      if (status.state === 'done') {
-        tidalLoginDone(tidalPending.loginId, { userName: status.userName, countryCode: status.countryCode, accessTier: status.accessTier });
-      } else if (status.state === 'error') {
-        setTidalError(status.message);
-      }
-    } catch (err) {
-      setTidalError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setTidalBusy(null);
-    }
+  const handleTidalCopyCode = (code: string): void => {
+    void copyText(code).then(setTidalCodeCopied);
   };
 
   const handleTidalCancel = (): void => {
     if (tidalPending) void logoutTidal({ loginId: tidalPending.loginId }).catch(() => undefined);
     setTidalPending(null);
-    setTidalLandingUrl('');
   };
 
   // A saved service loses its session on the server at once; an unsaved sign-in is just dropped.
+  // A hand-pasted token is cleared from the form, so the next save removes it.
   const handleTidalSignOut = async (): Promise<void> => {
     setTidalBusy('signout');
     setTidalError(null);
@@ -2497,9 +2469,9 @@ export default function ContentView(): JSX.Element {
       } else if (bridgeForm.tidalLoginId) {
         await logoutTidal({ loginId: bridgeForm.tidalLoginId });
       }
-      updateBridgeForm({ tidalAccount: null, tidalLoginId: '' });
+      updateBridgeForm({ tidalAccount: null, tidalLoginId: '', tidalAccessToken: '' });
     } catch (err) {
-      setTidalError(err instanceof Error ? err.message : String(err));
+      setTidalError({ message: err instanceof Error ? err.message : String(err), expired: false });
     } finally {
       setTidalBusy(null);
     }
@@ -2622,11 +2594,10 @@ export default function ContentView(): JSX.Element {
       if (bridgeForm.deezerArl.trim()) payload.deezerArl = bridgeForm.deezerArl.trim();
     }
     if (provider === 'tidal') {
+      // An old hand-pasted token goes back as it came, until a sign-out clears it.
       if (bridgeForm.tidalAccessToken.trim()) {
         payload.tidalAccessToken = bridgeForm.tidalAccessToken.trim();
-      }
-      if (bridgeForm.tidalCountryCode.trim()) {
-        payload.tidalCountryCode = bridgeForm.tidalCountryCode.trim().toUpperCase();
+        if (bridgeForm.tidalCountryCode.trim()) payload.tidalCountryCode = bridgeForm.tidalCountryCode.trim().toUpperCase();
       }
       if (bridgeForm.tidalClientId.trim()) payload.tidalClientId = bridgeForm.tidalClientId.trim();
       if (bridgeForm.tidalClientSecret.trim()) payload.tidalClientSecret = bridgeForm.tidalClientSecret.trim();
@@ -3867,10 +3838,6 @@ export default function ContentView(): JSX.Element {
                         ) : null}
                         {bridge.provider === 'tidal' && bridge.tidal?.refreshError ? (
                           <div className="content-list-row__meta content-warn">{t('content.bridge.tidal.rowSignInAgain')}</div>
-                        ) : bridge.provider === 'tidal' && (bridge.tidal?.previewReason || bridge.tidal?.accessTier === 'THIRD_PARTY') ? (
-                          <div className="content-list-row__meta content-warn">
-                            {t('content.bridge.tidal.previewOnly', { reason: bridge.tidal?.previewReason || 'FULL_REQUIRES_HIGHER_ACCESS_TIER' })}
-                          </div>
                         ) : null}
                       </div>
                       <div className="content-list-row__actions">
@@ -5098,7 +5065,40 @@ export default function ContentView(): JSX.Element {
                 <div className="bridge-modal__panel-title">{t('content.bridge.tidal.title')}</div>
                 <p className="bridge-modal__panel-desc">{t('content.bridge.tidal.descLong')}</p>
                 <div className="bridge-modal__stack">
-                  {bridgeForm.tidalAccount ? (
+                  {tidalEnvClient ? (
+                    <p className="bridge-modal__help">{t('content.bridge.tidal.envClient')}</p>
+                  ) : (
+                    <>
+                      <p className="bridge-modal__help">{t('content.bridge.tidal.clientIntro')}</p>
+                      <div className="bridge-modal__field">
+                        <label className="bridge-modal__label" htmlFor="bridge-tidal-client-id">{t('content.bridge.tidal.clientIdLabel')}</label>
+                        <input
+                          id="bridge-tidal-client-id"
+                          type="text"
+                          className="bridge-modal__input is-mono"
+                          value={bridgeForm.tidalClientId}
+                          onChange={(e) => updateBridgeForm({ tidalClientId: e.target.value })}
+                          aria-required="true"
+                          autoComplete="off"
+                          spellCheck={false}
+                        />
+                      </div>
+                      <div className="bridge-modal__field">
+                        <label className="bridge-modal__label" htmlFor="bridge-tidal-client-secret">{t('content.bridge.tidal.clientSecretLabel')}</label>
+                        <input
+                          id="bridge-tidal-client-secret"
+                          type="password"
+                          className="bridge-modal__input is-mono"
+                          value={bridgeForm.tidalClientSecret}
+                          onChange={(e) => updateBridgeForm({ tidalClientSecret: e.target.value })}
+                          aria-required="true"
+                          autoComplete="off"
+                        />
+                      </div>
+                    </>
+                  )}
+
+                  {tidalSignedIn ? (
                     <div className="bridge-modal__callout">
                       <svg className="bridge-modal__callout-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                         <polyline points="20 6 9 17 4 12" />
@@ -5106,22 +5106,15 @@ export default function ContentView(): JSX.Element {
                       <div className="bridge-modal__callout-body">
                         <p>
                           <strong>
-                            {bridgeForm.tidalAccount.userName
+                            {bridgeForm.tidalAccount?.userName
                               ? t('content.bridge.tidal.signedInAs', { name: bridgeForm.tidalAccount.userName })
                               : t('content.bridge.tidal.signedIn')}
                           </strong>
-                          {bridgeForm.tidalAccount.countryCode ? ` · ${bridgeForm.tidalAccount.countryCode}` : ''}
+                          {bridgeForm.tidalAccount?.countryCode ? ` · ${bridgeForm.tidalAccount.countryCode}` : ''}
                         </p>
-                        {bridgeForm.tidalAccount.refreshError ? (
+                        {bridgeForm.tidalAccount?.refreshError ? (
                           <p className="bridge-modal__help is-error" role="alert">
                             {t('content.bridge.tidal.refreshFailed', { reason: bridgeForm.tidalAccount.refreshError })}
-                          </p>
-                        ) : null}
-                        {bridgeForm.tidalAccount.previewReason || bridgeForm.tidalAccount.accessTier === 'THIRD_PARTY' ? (
-                          <p className="bridge-modal__help is-warn">
-                            {t('content.bridge.tidal.previewOnly', {
-                              reason: bridgeForm.tidalAccount.previewReason || 'FULL_REQUIRES_HIGHER_ACCESS_TIER',
-                            })}
                           </p>
                         ) : null}
                         {bridgeForm.tidalLoginId ? <p>{t('content.bridge.tidal.saveToKeep')}</p> : null}
@@ -5141,50 +5134,19 @@ export default function ContentView(): JSX.Element {
                     <div className="bridge-modal__callout">
                       <span className="bridge-modal__spinner" aria-hidden="true" />
                       <div className="bridge-modal__callout-body">
-                        {tidalPending.mode === 'device' ? (
-                          <>
-                            <p>{t('content.bridge.tidal.deviceCodeIntro')}</p>
-                            <p className="bridge-modal__code">{tidalPending.userCode}</p>
-                            <p>
-                              <a className="bridge-modal__btn is-primary" href={tidalPending.verificationUriComplete} target="_blank" rel="noopener noreferrer">
-                                {t('content.bridge.tidal.openLink')}
-                              </a>
-                            </p>
-                            <p>{t('content.bridge.tidal.waiting')}</p>
-                          </>
-                        ) : (
-                          <>
-                            <p>{t('content.bridge.tidal.waitingBrowser')}</p>
-                            <p>
-                              <a href={tidalPending.authorizeUrl} target="_blank" rel="noopener noreferrer">
-                                {t('content.bridge.tidal.reopen')}
-                              </a>
-                            </p>
-                            <label className="bridge-modal__label" htmlFor="bridge-tidal-landing">
-                              {t('content.bridge.tidal.pasteLabel')}
-                            </label>
-                            <input
-                              id="bridge-tidal-landing"
-                              type="text"
-                              className="bridge-modal__input is-mono"
-                              value={tidalLandingUrl}
-                              onChange={(e) => setTidalLandingUrl(e.target.value)}
-                              placeholder={`${tidalPending.redirectUri}?code=…&state=…`}
-                              autoComplete="off"
-                            />
-                            <span className="bridge-modal__help">{t('content.bridge.tidal.pasteHelp')}</span>
-                            <p>
-                              <button
-                                type="button"
-                                className="bridge-modal__btn"
-                                onClick={() => void handleTidalPasteFinish()}
-                                disabled={tidalBusy !== null || !tidalLandingUrl.trim()}
-                              >
-                                {tidalBusy === 'finish' ? t('content.bridge.tidal.confirming') : t('content.bridge.tidal.confirm')}
-                              </button>
-                            </p>
-                          </>
-                        )}
+                        <p>{t('content.bridge.tidal.deviceCodeIntro')}</p>
+                        <div className="bridge-modal__code-row">
+                          <span className="bridge-modal__code">{tidalPending.userCode}</span>
+                          <button type="button" className="bridge-modal__btn" onClick={() => handleTidalCopyCode(tidalPending.userCode)}>
+                            {tidalCodeCopied ? t('content.bridge.tidal.copied') : t('content.bridge.tidal.copy')}
+                          </button>
+                        </div>
+                        <p>
+                          <a className="bridge-modal__btn is-primary" href={tidalPending.verificationUriComplete} target="_blank" rel="noopener noreferrer">
+                            {t('content.bridge.tidal.openLink')}
+                          </a>
+                        </p>
+                        <p aria-live="polite">{t('content.bridge.tidal.waiting')}</p>
                         <p>
                           <button type="button" className="bridge-modal__btn" onClick={handleTidalCancel}>
                             {t('content.bridge.tidal.cancel')}
@@ -5197,15 +5159,21 @@ export default function ContentView(): JSX.Element {
                       <button
                         type="button"
                         className="bridge-modal__btn is-primary"
-                        onClick={() => void handleTidalSignInStart('browser')}
-                        disabled={tidalBusy !== null}
+                        onClick={() => void handleTidalSignInStart()}
+                        disabled={tidalBusy !== null || !tidalClientReady}
                       >
-                        {t('content.bridge.tidal.signIn')}
+                        {tidalBusy === 'start'
+                          ? t('content.bridge.tidal.starting')
+                          : tidalError?.expired
+                            ? t('content.bridge.tidal.newCode')
+                            : t('content.bridge.tidal.signIn')}
                       </button>
-                      <span className="bridge-modal__help">{t('content.bridge.tidal.signInHint')}</span>
+                      <span className="bridge-modal__help">
+                        {tidalClientReady ? t('content.bridge.tidal.signInHint') : t('content.bridge.tidal.clientNeeded')}
+                      </span>
                     </div>
                   )}
-                  {tidalError ? <p className="bridge-modal__help is-error" role="alert">{tidalError}</p> : null}
+                  {tidalError ? <p className="bridge-modal__help is-error" role="alert">{tidalError.message}</p> : null}
 
                   <div className="bridge-modal__field">
                     <label className="bridge-modal__label" htmlFor="bridge-tidal-quality">{t('content.bridge.tidal.qualityLabel')}</label>
@@ -5223,97 +5191,6 @@ export default function ContentView(): JSX.Element {
                     </select>
                     <span className="bridge-modal__help">{t('content.bridge.tidal.qualityHelp')}</span>
                   </div>
-
-                  <details className="bridge-modal__advanced">
-                    <summary>{t('content.bridge.tidal.advanced')}</summary>
-                    <div className="bridge-modal__stack">
-                      {tidalClientInfo?.envConfigured ? (
-                        <p className="bridge-modal__help">{t('content.bridge.tidal.envClient')}</p>
-                      ) : (
-                        <>
-                          <p className="bridge-modal__help">{t('content.bridge.tidal.ownAppIntro')}</p>
-                          <div className="bridge-modal__field">
-                            <label className="bridge-modal__label" htmlFor="bridge-tidal-client-id">{t('content.bridge.tidal.clientIdLabel')}</label>
-                            <input
-                              id="bridge-tidal-client-id"
-                              type="text"
-                              className="bridge-modal__input is-mono"
-                              value={bridgeForm.tidalClientId}
-                              onChange={(e) => updateBridgeForm({ tidalClientId: e.target.value })}
-                              placeholder={tidalClientInfo?.defaultClientId}
-                              autoComplete="off"
-                            />
-                          </div>
-                          <div className="bridge-modal__field">
-                            <label className="bridge-modal__label" htmlFor="bridge-tidal-client-secret">{t('content.bridge.tidal.clientSecretLabel')}</label>
-                            <input
-                              id="bridge-tidal-client-secret"
-                              type="password"
-                              className="bridge-modal__input is-mono"
-                              value={bridgeForm.tidalClientSecret}
-                              onChange={(e) => updateBridgeForm({ tidalClientSecret: e.target.value })}
-                              autoComplete="off"
-                            />
-                          </div>
-                          <div className="bridge-modal__field">
-                            <label className="bridge-modal__label" htmlFor="bridge-tidal-redirect">{t('content.bridge.tidal.redirectLabel')}</label>
-                            <input
-                              id="bridge-tidal-redirect"
-                              type="text"
-                              className="bridge-modal__input is-mono"
-                              value={tidalClientInfo?.redirectUri ?? ''}
-                              readOnly
-                              onFocus={(e) => e.currentTarget.select()}
-                            />
-                            <span className="bridge-modal__help">{t('content.bridge.tidal.redirectHelp')}</span>
-                          </div>
-                        </>
-                      )}
-                      {!bridgeForm.tidalAccount && !tidalPending ? (
-                        <div className="bridge-modal__field">
-                          <span className="bridge-modal__label">{t('content.bridge.tidal.deviceLabel')}</span>
-                          <p>
-                            <button
-                              type="button"
-                              className="bridge-modal__btn"
-                              onClick={() => void handleTidalSignInStart('device')}
-                              disabled={tidalBusy !== null}
-                            >
-                              {t('content.bridge.tidal.deviceSignIn')}
-                            </button>
-                          </p>
-                          <span className="bridge-modal__help">{t('content.bridge.tidal.deviceHelp')}</span>
-                        </div>
-                      ) : null}
-                      <div className="bridge-modal__field">
-                        <label className="bridge-modal__label" htmlFor="bridge-tidal-token">{t('content.bridge.tidal.tokenLabel')}</label>
-                        <input
-                          id="bridge-tidal-token"
-                          type="text"
-                          className="bridge-modal__input is-mono"
-                          value={bridgeForm.tidalAccessToken}
-                          onChange={(e) => updateBridgeForm({ tidalAccessToken: e.target.value })}
-                          placeholder={t('content.bridge.tidal.placeholder')}
-                          autoComplete="off"
-                        />
-                        <span className="bridge-modal__help">{t('content.bridge.tidal.tokenHelp')}</span>
-                      </div>
-                      <div className="bridge-modal__field">
-                        <label className="bridge-modal__label" htmlFor="bridge-tidal-country">{t('content.bridge.tidal.countryLabel')}</label>
-                        <input
-                          id="bridge-tidal-country"
-                          type="text"
-                          className="bridge-modal__input is-mono bridge-modal__input--narrow"
-                          value={bridgeForm.tidalCountryCode}
-                          onChange={(e) => updateBridgeForm({ tidalCountryCode: e.target.value.toUpperCase() })}
-                          placeholder="US"
-                          autoComplete="off"
-                          maxLength={2}
-                        />
-                        <span className="bridge-modal__help">{t('content.bridge.tidal.countryHelp')}</span>
-                      </div>
-                    </div>
-                  </details>
                 </div>
               </div>
             )}

@@ -424,47 +424,35 @@ export async function createSpotifyBridge(payload: CreateSpotifyBridgePayload): 
 
 export type TidalQuality = 'LOW' | 'HIGH' | 'LOSSLESS' | 'HI_RES_LOSSLESS';
 
-/** A browser sign-in at login.tidal.com, or a code for link.tidal.com (device-capable clients only). */
-export type TidalLoginMode = 'browser' | 'device';
-
-export type TidalLoginStart =
-  | {
-      ok: true;
-      loginId: string;
-      mode: 'browser';
-      authorizeUrl: string;
-      /** The redirect URI the app must have registered. */
-      redirectUri: string;
-      /** The server callback the public redirect page forwards to. */
-      callbackUrl: string;
-      expiresIn: number;
-    }
-  | {
-      ok: true;
-      loginId: string;
-      mode: 'device';
-      userCode: string;
-      verificationUri: string;
-      verificationUriComplete: string;
-      expiresIn: number;
-      interval: number;
-    };
+/** The device sign-in: a code to approve at link.tidal.com. */
+export type TidalLoginStart = {
+  ok: true;
+  loginId: string;
+  mode: 'device';
+  userCode: string;
+  verificationUri: string;
+  /** The verification page with the code filled in. */
+  verificationUriComplete: string;
+  expiresIn: number;
+  interval: number;
+};
 
 export type TidalLoginStatus =
   | { state: 'pending' }
   | { state: 'done'; userId?: string; userName?: string; countryCode?: string; accessTier?: string }
   | { state: 'error'; error: string; message: string };
 
-/**
- * Which Tidal app signs in when the form names none (the environment's, else sonn's own), and the
- * redirect URI an app of your own must have registered.
- */
-export async function fetchTidalClientStatus(): Promise<{ envConfigured: boolean; defaultClientId: string; redirectUri: string }> {
+/** Whether the server's environment names the TIDAL client to sign in with (SONN_TIDAL_CLIENT_ID). */
+export async function fetchTidalClientStatus(): Promise<{ envConfigured: boolean }> {
   return requestJson(`${API_BASE}/tidal/client`, { errorMessage: 'Failed to read the Tidal client' });
 }
 
+/**
+ * Start a device sign-in. The client id and secret are the form's; the server prefers its
+ * environment's client and falls back to the saved service's.
+ */
 export async function startTidalLogin(input: {
-  mode: TidalLoginMode;
+  mode: 'device';
   serviceId?: string;
   clientId?: string;
   clientSecret?: string;
@@ -480,16 +468,6 @@ export async function startTidalLogin(input: {
 export async function fetchTidalLoginStatus(loginId: string): Promise<TidalLoginStatus> {
   return requestJson(`${API_BASE}/tidal/login/status?loginId=${encodeURIComponent(loginId)}`, {
     errorMessage: 'Failed to read the Tidal sign-in',
-  });
-}
-
-/** Finish a browser sign-in with the address the browser ended on, when it could not reach this server. */
-export async function finishTidalLogin(loginId: string, url: string): Promise<TidalLoginStatus> {
-  return requestJson(`${API_BASE}/tidal/login/finish`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ loginId, url }),
-    errorMessage: 'Tidal did not accept this sign-in',
   });
 }
 
