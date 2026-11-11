@@ -368,11 +368,6 @@ export type SpotifyBridgeConfig = {
     userName?: string;
     countryCode?: string;
     refreshError?: string;
-    flow?: 'pkce' | 'device';
-    /** `THIRD_PARTY` for an app from developer.tidal.com, which TIDAL gives only previews. */
-    accessTier?: string;
-    /** Why the last track played as a 30-second preview, when it did. */
-    previewReason?: string;
     /** What TIDAL actually delivered for the last track, when lower than `tidalQuality`; unset once a track plays as asked. */
     deliveredQuality?: TidalQuality;
   };
@@ -441,7 +436,7 @@ export type TidalLoginStart = {
 
 export type TidalLoginStatus =
   | { state: 'pending' }
-  | { state: 'done'; userId?: string; userName?: string; countryCode?: string; accessTier?: string }
+  | { state: 'done'; userId?: string; userName?: string; countryCode?: string }
   | { state: 'error'; error: string; message: string };
 
 /** Whether the server's environment names the TIDAL client to sign in with (SONN_TIDAL_CLIENT_ID). */
