@@ -3,7 +3,7 @@
 # `src/admin/styles/theme.css`, and no stylesheet names a token that does not exist), and the build.
 #
 # No typecheck: the types this console shares with the server are imported from the server's
-# source (), so  only passes in a checkout that sits inside the server's.
+# source (`@/domain/…`), so `tsc` only passes in a checkout that sits inside the server's.
 name: Check
 
 on:
