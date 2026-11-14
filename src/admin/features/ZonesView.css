@@ -1756,7 +1756,7 @@ button.zones-hub__toggle:disabled {
   background:
     radial-gradient(120% 95% at 6% 0%, color-mix(in srgb, var(--accent) 7%, transparent), transparent 58%),
     linear-gradient(165deg, color-mix(in srgb, var(--bg-card) 94%, var(--ink)), var(--surface-1));
-  box-shadow: 0 10px 28px rgba(2, 6, 23, 0.06), inset 0 1px 0 color-mix(in srgb, var(--ink) 42%, transparent);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--shade) 6%, transparent), inset 0 1px 0 color-mix(in srgb, var(--ink) 42%, transparent);
   animation: shell-reveal 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
 
@@ -2051,8 +2051,8 @@ button.zones-hub__toggle:disabled {
 
 .zone-power-tile__action,
 .zone-eq-tile__action {
-  border: 1px solid rgba(29, 35, 42, 0.24);
-  background: linear-gradient(180deg, rgba(29, 35, 42, 0.96), rgba(17, 24, 39, 0.94));
+  border: 1px solid color-mix(in srgb, var(--surface-2) 24%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--surface-2) 96%, transparent), color-mix(in srgb, var(--bg-card) 94%, transparent));
   color: var(--text);
   border-radius: var(--radius-pill);
   min-height: 26px;
@@ -2067,9 +2067,9 @@ button.zones-hub__toggle:disabled {
 .zone-power-tile__action:hover,
 .zone-eq-tile__action:hover {
   transform: translateY(-1px);
-  box-shadow: 0 8px 18px rgba(17, 24, 39, 0.16);
-  background: linear-gradient(180deg, rgba(17, 24, 39, 0.98), rgba(15, 23, 42, 0.96));
-  border-color: rgba(17, 24, 39, 0.42);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--shade) 16%, transparent);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--bg-card) 98%, transparent), color-mix(in srgb, var(--bg) 96%, transparent));
+  border-color: color-mix(in srgb, var(--shade) 42%, transparent);
   filter: saturate(0.98);
 }
 
@@ -2120,39 +2120,39 @@ button.zones-hub__toggle:disabled {
 
 .zone-section-head .chip.chip--sm.zone-power-state-chip--on {
   color: var(--accent-bright) !important;
-  background: linear-gradient(180deg, rgba(16, 185, 129, 0.28), rgba(6, 95, 70, 0.34)) !important;
-  border-color: rgba(52, 211, 153, 0.65) !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 28%, transparent), color-mix(in srgb, var(--accent-deep) 34%, transparent)) !important;
+  border-color: color-mix(in srgb, var(--accent) 65%, transparent) !important;
 }
 
 .zone-section-head .chip.chip--sm.zone-power-state-chip--off {
   color: var(--danger-bright) !important;
-  background: linear-gradient(180deg, rgba(244, 63, 94, 0.24), rgba(159, 18, 57, 0.34)) !important;
-  border-color: rgba(251, 113, 133, 0.62) !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--danger) 24%, transparent), color-mix(in srgb, var(--danger-deep) 34%, transparent)) !important;
+  border-color: color-mix(in srgb, var(--danger) 62%, transparent) !important;
 }
 
 .zone-power-state-chip--on:hover,
 .chip--static.zone-power-state-chip--on:hover:not(:disabled):not(.is-active) {
   color: var(--accent-bright);
-  background: linear-gradient(180deg, rgba(16, 185, 129, 0.28), rgba(6, 95, 70, 0.34));
-  border-color: rgba(52, 211, 153, 0.65);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 28%, transparent), color-mix(in srgb, var(--accent-deep) 34%, transparent));
+  border-color: color-mix(in srgb, var(--accent) 65%, transparent);
 }
 
 .zone-power-state-chip--off:hover,
 .chip--static.zone-power-state-chip--off:hover:not(:disabled):not(.is-active) {
   color: var(--danger-bright);
-  background: linear-gradient(180deg, rgba(244, 63, 94, 0.24), rgba(159, 18, 57, 0.34));
-  border-color: rgba(251, 113, 133, 0.62);
+  background: linear-gradient(180deg, color-mix(in srgb, var(--danger) 24%, transparent), color-mix(in srgb, var(--danger-deep) 34%, transparent));
+  border-color: color-mix(in srgb, var(--danger) 62%, transparent);
 }
 
 .zone-section-head .chip.chip--sm.zone-eq-state-chip--on {
   color: var(--accent-bright) !important;
-  background: linear-gradient(180deg, rgba(16, 185, 129, 0.28), rgba(6, 95, 70, 0.34)) !important;
-  border-color: rgba(52, 211, 153, 0.65) !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--accent) 28%, transparent), color-mix(in srgb, var(--accent-deep) 34%, transparent)) !important;
+  border-color: color-mix(in srgb, var(--accent) 65%, transparent) !important;
 }
 
 .zone-section-head .chip.chip--sm.zone-eq-state-chip--warn {
   color: var(--warn-bright) !important;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--warn-bright) 22%, transparent), rgba(146, 64, 14, 0.32)) !important;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--warn-bright) 22%, transparent), color-mix(in srgb, var(--warn-deep) 32%, transparent)) !important;
   border-color: color-mix(in srgb, var(--warn-bright) 62%, transparent) !important;
 }
 
@@ -2461,7 +2461,7 @@ button.zones-hub__toggle:disabled {
   transform: none;
 }
 
-@media (max-width: 360px) {
+@media (max-width: 360px) { /* audit-ok: only the narrowest phones lose the label */
   .zone-output-audio-button {
     padding: 0;
     min-width: 34px;
@@ -2736,7 +2736,7 @@ button.zones-hub__toggle:disabled {
 }
 
 .zone-device-row--static:hover {
-  background: rgba(15, 23, 42, 0.06);
+  background: color-mix(in srgb, var(--shade) 6%, transparent);
 }
 
 .zone-device-row:focus-visible {

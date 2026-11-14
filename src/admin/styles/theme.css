@@ -80,15 +80,28 @@
   --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, Consolas, 'Liberation Mono', monospace;
   --font-display: 'Hanken Grotesk', var(--font-sans);
 
-  /* --- Redesign palette (mockup baseline). Use these in new CSS. --- */
+  /*
+   * The palette. Every colour in the console comes from here: component CSS refers to these by
+   * name and never spells out a hex or an rgba of its own (`npm run audit:ui:strict` enforces it).
+   * A tint is `color-mix(in srgb, var(--accent) 30%, transparent)` — the token at an alpha — so the
+   * light theme only has to redefine this block.
+   */
   --bg: #0A0C10;
   --bg-card: #15181D;
-  --bg-elev: #1B1F26;            /* menus, popovers, raised cards */
   --bg-console: #0C0E13;         /* logs console */
   --bg-input: #0A0C0F;
   --surface: rgba(255, 255, 255, 0.04);   /* default control fill */
   --surface-soft: rgba(255, 255, 255, 0.03); /* subtler fill / hover base */
+  --surface-1: #1C1F25;          /* solid raised fill */
+  --surface-2: #232730;
+  /* What a tint is made of: `--ink` lightens a dark surface (and darkens a light one — it flips
+     with the theme), `--shade` is for shadows and scrims, `--white` stays white on any theme
+     (toggle knobs, text on a solid colour). */
+  --ink: #FFFFFF;
+  --shade: #000000;
+  --white: #FFFFFF;
   --text: #EDEEF0;
+  --text-subtle: #CBD1D9;
   --text-muted: #9CA3AF;
   --text-dim: #6B7280;
   --text-faint: #4B5563;
@@ -104,28 +117,9 @@
   --warn-on: #2A1604;
   --danger: #EF4444;
   --danger-bright: #FCA5A5;
+  --danger-deep: #DC2626;
   --info: #60A5FA;
-  --border-accent: rgba(74, 222, 128, 0.30);
-  --border-accent-strong: rgba(74, 222, 128, 0.55);
-  --radial: rgba(74, 222, 128, 0.05); /* ambient top glow */
-  --shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
-  --modal-backdrop: rgba(10, 12, 16, 0.65); /* dialog overlay */
-  --spring: cubic-bezier(0.2, 0.8, 0.2, 1);
-
-  /* --- Legacy tokens (still consumed by Setup/Content/Logs/Zones until each
-         view is rewritten on the redesign palette above; aliased to the new
-         tokens so the visual baseline matches the mockup). --- */
-  --bg-card: var(--bg-card);
-  --surface-1: #1c1f25;
-  --surface-2: #232730;
-  --bg: var(--bg);
-  --bg-card: var(--bg-card);
-  --surface-1: #1c1f25;
-  --color-surface-alt: #232730;
-  --text: var(--text);
-  --text-subtle: #cbd1d9;
-  --text-muted: var(--text-muted);
-  --text-dim: var(--text-dim);
+  --info-bright: #93C5FD;
   /* The hairline, at the weight both players draw theirs (`--line` / `--hair`): 7%, not 6%. One
      alpha for every divider in the product. */
   --border: rgba(255, 255, 255, 0.07);
@@ -133,34 +127,51 @@
   --border-soft: rgba(255, 255, 255, 0.04);
   --border-whisper: rgba(255, 255, 255, 0.03);
   --border-faint: rgba(255, 255, 255, 0.05);
-  --border-soft: var(--border-soft);
-  --border: var(--border);
-  --border-strong: var(--border-strong);
   --border-input: rgba(255, 255, 255, 0.12);
-  --accent: var(--accent);
-  --accent: var(--accent);
-  --accent-on: var(--accent-on);
-  --accent-soft: rgba(74, 222, 128, 0.08);
-  --color-success: var(--accent-deep);
-  --color-warning: var(--warn);
-  --color-info: #2563eb;
-  --danger: var(--danger);
-  --white: #ffffff;
+  --border-accent: rgba(74, 222, 128, 0.30);
+  --border-accent-strong: rgba(74, 222, 128, 0.55);
+  --radial: rgba(74, 222, 128, 0.05); /* ambient top glow */
+  --modal-backdrop: rgba(10, 12, 16, 0.65); /* dialog overlay */
   --shadow-soft: 0 1px 0 rgba(246, 246, 246, 0.05), 0 16px 44px -36px rgba(0, 0, 0, 0.68);
-  --shadow-md: 0 1px 0 rgba(0, 0, 0, 0.04), 0 22px 54px -44px rgba(0, 0, 0, 0.24);
-  --shadow-lg: 0 1px 0 rgba(0, 0, 0, 0.05), 0 30px 70px -52px rgba(0, 0, 0, 0.28);
-  --shadow-float: 0 26px 56px -44px rgba(0, 0, 0, 0.78);
-  --radius-sm: 8px;
-  --radius-md: 10px;
-  --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-pill: 999px;
-  --card-radius: 12px;
-  --card-border-color: rgba(255, 255, 255, 0.06);
-  --shadow-soft: var(--shadow-soft);
-  --bg-card: var(--bg-card);
+  --shadow-float: 0 26px 56px -44px rgba(0, 0, 0, 0.78); /* menus, popovers */
   --card-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   --panel-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+  --ring: 0 0 0 3px rgba(74, 222, 128, 0.18);
+  --ring-outline: 2px solid rgba(74, 222, 128, 0.5);
+  /* The pointer's own light on card surfaces — see the spotlight block below. */
+  --spotlight: rgba(255, 255, 255, 0.05);
+  --spring: cubic-bezier(0.2, 0.8, 0.2, 1);
+
+  /*
+   * The type scale. Seven sizes and one display size; nothing in the console sets a font size
+   * that is not one of these.
+   *
+   * There used to be 65 distinct sizes, and the most common one was 10px — 8px and 9px were not
+   * far behind. `--fs-2xs` is the floor now and is meant for one thing: short uppercase labels
+   * and badges, where capitals at 11px still read. Running text starts at `--fs-xs`.
+   */
+  --fs-2xs: 0.6875rem;  /* 11px — uppercase labels, badges */
+  --fs-xs: 0.75rem;     /* 12px — captions, meta */
+  --fs-sm: 0.8125rem;   /* 13px — secondary text, controls */
+  --fs-md: 0.875rem;    /* 14px — body */
+  --fs-lg: 1rem;        /* 16px — emphasised body, small headings */
+  --fs-xl: 1.25rem;     /* 20px — section headings */
+  --fs-2xl: 1.5rem;     /* 24px — page titles */
+  --fs-display: 1.875rem; /* 30px — hero wordmark, sign-in title */
+
+  /* The corner scale: four radii and the pill. A circle is `50%`, a square corner is `0`. */
+  --radius-xs: 4px;   /* bars, checkboxes, tiny chips */
+  --radius-sm: 8px;   /* controls, buttons, inputs */
+  --radius-md: 12px;  /* cards, panels */
+  --radius-lg: 16px;  /* modals, hero surfaces */
+  --radius-pill: 999px;
+
+  /*
+   * Breakpoints cannot be custom properties (a media query cannot read one), so they are a
+   * convention instead, checked by the audit: 640px (phone), 900px (tablet), 1200px (narrow
+   * desktop). Write `max-width` queries against exactly those three.
+   */
+
   /* How wide the workspace may grow — one token, where six hardcoded caps used
      to be scattered across the shell and every view.
      Full width was tried and rejected: only the log console genuinely gained,
@@ -177,7 +188,6 @@
   --prose-max: 68ch;
   --page-width: min(1400px, 94vw);
   --page-padding: clamp(1.1rem, 0.9rem + 0.8vw, 1.8rem);
-  --space-0: 0;
   --space-1: 0.25rem;
   --space-2: 0.5rem;
   --space-3: 0.75rem;
@@ -188,34 +198,14 @@
   --space-8: 2rem;
   --space-9: 2.5rem;
   --space-10: 3rem;
-  --page-margin-top: 2rem;
-  --page-margin-bottom: 2.6rem;
-  --gap-shell: 1.4rem;
-  --gap-hero: 1.2rem;
-  --gap-card: 0.9rem;
-  --gap-tile: 0.75rem;
   --card-pad: var(--space-6);
   --card-pad-sm: var(--space-4);
   --card-gap: var(--space-4);
   --card-gap-sm: var(--space-3);
-  --radius-md: 12px;
-  --shell-border: rgba(255, 255, 255, 0.06);
-  --shell-bg: var(--bg-card);
-  --shell-shadow: var(--shadow-soft);
-  --fs-xs: 0.72rem;
-  --fs-sm: 0.84rem;
-  --fs-lg: 0.98rem;
-  --fs-lg: 1.1rem;
   --control-height: 44px;
   --control-height-compact: 30px;
   --btn-pad-y: 0.7rem;
   --btn-pad-x: 1.4rem;
-  --ring: 0 0 0 3px rgba(74, 222, 128, 0.18);
-  --ring-outline: 2px solid rgba(74, 222, 128, 0.5);
-  /* The pointer's own light on card surfaces — see the spotlight block below. */
-  --spotlight: rgba(255, 255, 255, 0.05);
-  --bg-input: var(--bg-input);
-  --control-bg-top: var(--bg-input);
   --z-header: 40;
   --z-alert: 7000;
   --z-version: 50;
@@ -236,20 +226,30 @@ body[data-theme='light'] {
   /* surfaces */
   --bg: #EAECEF;            /* greyer page so white panels pop */
   --bg-card: #FFFFFF;
-  --bg-elev: #FFFFFF;
   --bg-console: #F1F3F5;
   --bg-input: #FFFFFF;
   --surface: rgba(17, 24, 39, 0.04);
   --surface-soft: rgba(17, 24, 39, 0.03);
+  --surface-1: #F8F9FB;
+  --surface-2: #EEF0F4;
+
+  /* tints — ink is dark here, so every `color-mix(… var(--ink) …)` darkens instead of lightens */
+  --ink: #111827;
+  --shade: #111827;
 
   /* borders — heavier so edges read on white */
   --border: rgba(17, 24, 39, 0.12);
   --border-strong: rgba(17, 24, 39, 0.22);
+  --border-soft: rgba(17, 24, 39, 0.06);
+  --border-whisper: rgba(17, 24, 39, 0.04);
+  --border-faint: rgba(17, 24, 39, 0.06);
+  --border-input: rgba(17, 24, 39, 0.18);
   --border-accent: rgba(22, 163, 74, 0.40);
   --border-accent-strong: rgba(22, 163, 74, 0.55);
 
   /* text */
   --text: #15181D;
+  --text-subtle: #2D333D;
   --text-muted: #525B66;
   --text-dim: #7A828E;
   --text-faint: #A6AEB8;
@@ -265,56 +265,24 @@ body[data-theme='light'] {
   /* status — darker so labels stay legible on light */
   --warn: #D97706;
   --warn-bright: #B45309;
+  --warn-deep: #92400E;
+  --warn-on: #FFFFFF;
   --danger: #DC2626;
   --danger-bright: #B91C1C;
+  --danger-deep: #B91C1C;
   --info: #2563EB;
+  --info-bright: #1D4ED8;
 
   /* effects */
-  --shadow: 0 18px 48px rgba(17, 24, 39, 0.14);
   --radial: rgba(22, 163, 74, 0.06);
   --modal-backdrop: rgba(17, 24, 39, 0.45);
   --spotlight: rgba(17, 24, 39, 0.045);
-
-  /* legacy aliases (still consumed by older panels) */
-  --bg-card: #FFFFFF;
-  --surface-1: #F8F9FB;
-  --surface-2: #EEF0F4;
-  --bg: var(--bg);
-  --bg-card: var(--bg-card);
-  --surface-1: #F8F9FB;
-  --color-surface-alt: #EEF0F4;
-  --text: var(--text);
-  --text-subtle: #2D333D;
-  --text-muted: var(--text-muted);
-  --text-dim: var(--text-dim);
-  --border: var(--border);
-  --border-strong: var(--border-strong);
-  --border-soft: rgba(17, 24, 39, 0.06);
-  --border-whisper: rgba(17, 24, 39, 0.04);
-  --border-faint: rgba(17, 24, 39, 0.06);
-  --border-soft: var(--border-soft);
-  --border-input: rgba(17, 24, 39, 0.18);
-  --accent: var(--accent);
-  --accent: var(--accent);
-  --accent-on: var(--accent-on);
-  --accent-soft: rgba(22, 163, 74, 0.12);
-  --color-success: var(--accent);
-  --color-warning: var(--warn);
-  --color-info: var(--info);
-  --danger: var(--danger);
-  --white: #FFFFFF;
   --shadow-soft: 0 1px 0 rgba(17, 24, 39, 0.04), 0 16px 44px -36px rgba(17, 24, 39, 0.28);
-  --shadow-md: 0 1px 0 rgba(17, 24, 39, 0.04), 0 22px 54px -44px rgba(17, 24, 39, 0.18);
-  --shadow-lg: 0 1px 0 rgba(17, 24, 39, 0.05), 0 30px 70px -52px rgba(17, 24, 39, 0.22);
   --shadow-float: 0 26px 56px -44px rgba(17, 24, 39, 0.4);
-  --card-border-color: var(--border);
-  --shadow-soft: var(--shadow-soft);
-  --bg-card: var(--bg-card);
   --card-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   --panel-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.5);
-  --shell-border: var(--border);
-  --bg-input: var(--bg-input);
-  --control-bg-top: var(--bg-input);
+  --ring: 0 0 0 3px rgba(22, 163, 74, 0.2);
+  --ring-outline: 2px solid rgba(22, 163, 74, 0.55);
 }
 
 /* Smooth theme transition on the document chrome. */
@@ -465,26 +433,6 @@ body[data-theme='light'] .diag-strip {
   -webkit-text-fill-color: currentColor;
 }
 
-:root[data-density='dense'] {
-  --page-padding: clamp(0.9rem, 0.75rem + 0.6vw, 1.35rem);
-  --page-margin-top: 1.4rem;
-  --page-margin-bottom: 2rem;
-  --gap-shell: 1rem;
-  --gap-hero: 0.9rem;
-  --gap-card: 0.7rem;
-  --gap-tile: 0.6rem;
-  --card-pad: var(--space-5);
-  --card-pad-sm: var(--space-3);
-  --card-gap: var(--space-3);
-  --card-gap-sm: var(--space-2);
-  --fs-sm: 0.82rem;
-  --fs-lg: 0.95rem;
-  --control-height: 40px;
-  --control-height-compact: 28px;
-  --btn-pad-y: 0.6rem;
-  --btn-pad-x: 1.1rem;
-}
-
 * {
   box-sizing: border-box;
 }
@@ -516,7 +464,7 @@ body[data-theme='light'] .diag-strip {
 /* The thumb answers the hand: neutral at rest, the house green under the pointer —
    the same gesture the product site's scrollbar makes. */
 *::-webkit-scrollbar-thumb:hover {
-  background: rgba(74, 222, 128, 0.45);
+  background: color-mix(in srgb, var(--accent) 45%, transparent);
   background-clip: content-box;
 }
 
@@ -572,7 +520,7 @@ body.modal-open {
 
 /* Selection is brand, not chrome — the product site's green, at reading strength. */
 ::selection {
-  background: rgba(74, 222, 128, 0.28);
+  background: color-mix(in srgb, var(--accent) 28%, transparent);
 }
 
 body[data-theme='light'] ::selection {
@@ -606,7 +554,7 @@ a:hover {
 
 .page-hero__title {
   margin: 0;
-  font-size: clamp(1.7rem, 4vw, 2.2rem);
+  font-size: var(--fs-display);
   font-weight: 600;
   color: var(--text);
   line-height: 1.06;
@@ -625,9 +573,9 @@ body::before {
   inset: 0;
   pointer-events: none;
   background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(74, 222, 128, 0.08) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 50% at 20% 100%, rgba(74, 222, 128, 0.04) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 50% at 80% 100%, rgba(34, 197, 94, 0.03) 0%, transparent 50%);
+    radial-gradient(ellipse 80% 50% at 50% 0%, color-mix(in srgb, var(--accent) 8%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 50% at 20% 100%, color-mix(in srgb, var(--accent) 4%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 50% at 80% 100%, color-mix(in srgb, var(--accent) 3%, transparent) 0%, transparent 50%);
   z-index: 0;
   transition: background 1s ease;
   animation: ambient-fade-in 1.8s ease backwards;
@@ -679,16 +627,16 @@ body.no-intro .diag-item::before {
 
 body.is-unpaired::before {
   background:
-    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(245, 158, 11, 0.1) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 50% at 20% 100%, rgba(245, 158, 11, 0.05) 0%, transparent 50%),
-    radial-gradient(ellipse 60% 50% at 80% 100%, rgba(180, 83, 9, 0.03) 0%, transparent 50%);
+    radial-gradient(ellipse 80% 50% at 50% 0%, color-mix(in srgb, var(--warn) 10%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 50% at 20% 100%, color-mix(in srgb, var(--warn) 5%, transparent) 0%, transparent 50%),
+    radial-gradient(ellipse 60% 50% at 80% 100%, color-mix(in srgb, var(--warn-deep) 3%, transparent) 0%, transparent 50%);
 }
 
 body.is-success::before {
   background:
-    radial-gradient(ellipse 80% 60% at 50% 30%, rgba(74, 222, 128, 0.18) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 20% 80%, rgba(74, 222, 128, 0.1) 0%, transparent 60%),
-    radial-gradient(ellipse 60% 80% at 80% 80%, rgba(34, 197, 94, 0.06) 0%, transparent 60%);
+    radial-gradient(ellipse 80% 60% at 50% 30%, color-mix(in srgb, var(--accent) 18%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 20% 80%, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 60%),
+    radial-gradient(ellipse 60% 80% at 80% 80%, color-mix(in srgb, var(--accent) 6%, transparent) 0%, transparent 60%);
 }
 
 /* Workspace is for working — toned-down hint from above instead of the
@@ -696,7 +644,7 @@ body.is-success::before {
    specific than .is-success so it wins when both classes are present. */
 body.is-workspace::before {
   background:
-    radial-gradient(ellipse 90% 50% at 50% 0%, rgba(74, 222, 128, 0.1) 0%, transparent 60%);
+    radial-gradient(ellipse 90% 50% at 50% 0%, color-mix(in srgb, var(--accent) 10%, transparent) 0%, transparent 60%);
 }
 
 body::after {
@@ -872,7 +820,7 @@ button.ghost:not(:disabled):hover {
 button.primary:not(:disabled):hover {
   background: var(--accent-bright);
   border-color: var(--accent-bright);
-  box-shadow: 0 8px 24px rgba(74, 222, 128, 0.35);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 /* A light passes over the primary button when asked for attention — the product
@@ -889,7 +837,7 @@ button.primary::before {
   content: '';
   position: absolute;
   inset: -2px;
-  background: linear-gradient(105deg, transparent 40%, rgba(255, 255, 255, 0.4) 50%, transparent 60%);
+  background: linear-gradient(105deg, transparent 40%, color-mix(in srgb, var(--ink) 40%, transparent) 50%, transparent 60%);
   transform: translateX(-120%);
   transition: transform 0.7s var(--spring);
   pointer-events: none;
@@ -909,18 +857,18 @@ button.primary:not(:disabled):hover::before {
 
 .btn--secondary:not(:disabled):hover,
 button.secondary:not(:disabled):hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .btn--danger:not(:disabled):hover,
 button.danger:not(:disabled):hover {
-  background: #dc2626;
-  border-color: #dc2626;
+  background: var(--danger-deep);
+  border-color: var(--danger-deep);
 }
 
 .btn--ghost:not(:disabled):hover,
 button.ghost:not(:disabled):hover {
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
   border-color: var(--border-strong);
 }
 
@@ -943,8 +891,8 @@ button.ghost:not(:disabled):hover {
 }
 
 .btn--danger-link:not(:disabled):hover {
-  background: rgba(220, 38, 38, 0.06);
-  border-color: rgba(220, 38, 38, 0.18);
+  background: color-mix(in srgb, var(--danger-deep) 6%, transparent);
+  border-color: color-mix(in srgb, var(--danger-deep) 18%, transparent);
 }
 
 select {
@@ -1109,11 +1057,11 @@ select:disabled {
    single radial (its ::before override is !important).
    ============================================================ */
 body.is-workspace[data-tab='access']::before {
-  background: radial-gradient(ellipse 90% 50% at 50% 0%, rgba(45, 212, 191, 0.09) 0%, transparent 60%);
+  background: radial-gradient(ellipse 90% 50% at 50% 0%, rgba(45, 212, 191, 0.09) 0%, transparent 60%); /* brand */
 }
 
 body.is-workspace[data-tab='logs']::before {
-  background: radial-gradient(ellipse 90% 50% at 50% 0%, rgba(96, 165, 250, 0.07) 0%, transparent 60%);
+  background: radial-gradient(ellipse 90% 50% at 50% 0%, color-mix(in srgb, var(--info) 7%, transparent) 0%, transparent 60%);
 }
 
 @media (prefers-reduced-motion: reduce) {

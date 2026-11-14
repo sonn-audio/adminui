@@ -43,7 +43,7 @@ export default class ErrorBoundary extends React.Component<ErrorBoundaryProps, E
                 variant: 'secondary',
               }}
             />
-            <div style={{ fontSize: '0.9rem', color: 'rgba(15, 23, 42, 0.72)' }}>
+            <div style={{ fontSize: 'var(--fs-md)', color: 'var(--text-muted)' }}>
               If this keeps happening, open the browser console and share the stack trace.
             </div>
           </div>

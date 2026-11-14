@@ -1879,7 +1879,7 @@ export default function SetupView(): JSX.Element {
                   {t('setup.tts.reset')}
                 </button>
                 {showTtsValidation ? (
-                  <span style={{ color: 'var(--warn)', fontSize: 12 }}>
+                  <span style={{ color: 'var(--warn)', fontSize: 'var(--fs-xs)' }}>
                     {ttsValidationMessage}
                   </span>
                 ) : null}
@@ -1894,7 +1894,7 @@ export default function SetupView(): JSX.Element {
                 <span className="setup-section__eyebrow setup-section__eyebrow--info">{t('setup.events.eyebrow')}</span>
                 <h2 className="setup-section__title">{t('setup.events.title')}</h2>
                 <p className="setup-section__desc">
-                  {t('setup.events.descPrefix')}<code style={{ fontFamily: 'var(--font-mono)', fontSize: 11, background: 'rgba(255,255,255,0.04)', padding: '1px 5px', borderRadius: 3, color: 'var(--text-muted)' }}>playeventfile</code>{t('setup.events.descSuffix')}
+                  {t('setup.events.descPrefix')}<code style={{ fontFamily: 'var(--font-mono)', fontSize: 'var(--fs-xs)', background: 'var(--surface)', padding: '1px 5px', borderRadius: 'var(--radius-xs)', color: 'var(--text-muted)' }}>playeventfile</code>{t('setup.events.descSuffix')}
                 </p>
               </div>
             </header>

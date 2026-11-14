@@ -359,7 +359,7 @@ button.chip {
 }
 
 .form-status.is-saved {
-  color: rgba(21, 128, 61, 0.7);
+  color: color-mix(in srgb, var(--accent) 70%, transparent);
 }
 
 /* Simple form layout primitives (opt-in; safe to combine with view-specific classes). */

@@ -1092,7 +1092,7 @@ export default function ZonesView(): JSX.Element {
                 </header>
 
                 {group.zones.length === 0 ? (
-                  <div style={{ padding: '4px 12px 12px', color: 'var(--text-dim)', fontSize: 12 }}>
+                  <div style={{ padding: '4px 12px 12px', color: 'var(--text-dim)', fontSize: 'var(--fs-xs)' }}>
                     {t('zones.noZonesForDevice')}
                   </div>
                 ) : (
