@@ -2987,7 +2987,7 @@ export default function ContentView(): JSX.Element {
     appleMusicWidevineLoading
       ? 'idle'
       : widevineStatus === 'valid'
-        ? 'active'
+        ? 'ok'
         : widevineStatus === 'missing' || widevineStatus === 'invalid'
           ? 'warn'
           : widevineStatus === 'error'
