@@ -994,6 +994,8 @@ export default function ContentView(): JSX.Element {
   const [appleMusicPrivateKeyFile, setAppleMusicPrivateKeyFile] = React.useState<File | null>(null);
   const [appleMusicClientIdFile, setAppleMusicClientIdFile] = React.useState<File | null>(null);
   const [appleMusicWidevineUploading, setAppleMusicWidevineUploading] = React.useState(false);
+  // A ready CDM folds down to one line; this opens the upload panel anyway, to bring your own files.
+  const [appleMusicWidevineReplaceOpen, setAppleMusicWidevineReplaceOpen] = React.useState(false);
   const [appleMusicWidevineUploadedAt, setAppleMusicWidevineUploadedAt] = React.useState<{ privateKey: number; clientId: number }>({
     privateKey: 0,
     clientId: 0,
@@ -1531,6 +1533,7 @@ export default function ContentView(): JSX.Element {
     if (!bridgeModalOpen) return;
     // Amazon Music plays through the same CDM files as Apple Music.
     if (bridgeForm.provider !== 'applemusic' && bridgeForm.provider !== 'amazonmusic') return;
+    setAppleMusicWidevineReplaceOpen(false);
     void refreshAppleMusicWidevine();
   }, [bridgeForm.provider, bridgeModalOpen, refreshAppleMusicWidevine]);
 
@@ -1564,6 +1567,8 @@ export default function ContentView(): JSX.Element {
       });
       setAppleMusicPrivateKeyFile(null);
       setAppleMusicClientIdFile(null);
+      // A set that came out valid folds the panel back down; one that did not keeps it open.
+      if (status?.ok) setAppleMusicWidevineReplaceOpen(false);
     } catch (err) {
       setSpotifyState({
         bridgeFeedback: { type: 'error', message: err instanceof Error ? err.message : t('content.bridge.apple.uploadFailed') },
@@ -3005,6 +3010,9 @@ export default function ContentView(): JSX.Element {
         : t('content.bridge.apple.widevineFailed');
 
   const widevineFiles = appleMusicWidevineStatus?.files;
+  const widevineSource = appleMusicWidevineStatus?.source ?? 'uploaded';
+  // Nothing to do when the CDM already works, so the panel is one line until asked for more.
+  const widevineCompact = !appleMusicWidevineLoading && widevineStatus === 'valid' && !appleMusicWidevineReplaceOpen;
   const formatBytes = (bytes: number): string => {
     if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
     if (bytes < 1024) return `${bytes} B`;
@@ -4487,7 +4495,31 @@ export default function ContentView(): JSX.Element {
         };
         const providerLabel = PROVIDERS.find((p) => p.id === bridgeForm.provider)?.name ?? bridgeForm.provider;
         // Apple Music and Amazon Music license their streams through the same CDM files.
-        const renderWidevinePanel = (description: React.ReactNode): React.ReactNode => (
+        const renderWidevinePanel = (description: React.ReactNode): React.ReactNode =>
+          widevineCompact ? (
+          <div className="bridge-modal__wv is-ready">
+            <span className="bridge-modal__wv-check" aria-hidden="true">
+              <svg viewBox="0 0 16 16" width="14" height="14" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3.5 8.5l3 3 6-7" />
+              </svg>
+            </span>
+            <div className="bridge-modal__wv-ready-body">
+              <div className="bridge-modal__wv-title">{t('content.bridge.apple.widevineReadyTitle')}</div>
+              <div className="bridge-modal__wv-desc">
+                {widevineSource === 'bundled'
+                  ? t('content.bridge.apple.widevineBundledDesc')
+                  : t('content.bridge.apple.widevineOwnDesc')}
+              </div>
+            </div>
+            <button
+              type="button"
+              className="bridge-modal__wv-link"
+              onClick={() => setAppleMusicWidevineReplaceOpen(true)}
+            >
+              {widevineSource === 'bundled' ? t('content.bridge.apple.widevineUseOwn') : t('content.bridge.apple.widevineReplace')}
+            </button>
+          </div>
+          ) : (
         <div className="bridge-modal__wv">
           <div className="bridge-modal__wv-head">
             <div>
@@ -4601,14 +4633,29 @@ export default function ContentView(): JSX.Element {
             </div>
           </div>
           <div className="bridge-modal__wv-actions">
-            <button
-              type="button"
-              className="bridge-modal__btn"
-              onClick={() => void refreshAppleMusicWidevine()}
-              disabled={appleMusicWidevineLoading || appleMusicWidevineUploading}
-            >
-              {t('content.bridge.apple.refreshStatus')}
-            </button>
+            {appleMusicWidevineReplaceOpen && widevineStatus === 'valid' ? (
+              <button
+                type="button"
+                className="bridge-modal__btn"
+                onClick={() => {
+                  setAppleMusicPrivateKeyFile(null);
+                  setAppleMusicClientIdFile(null);
+                  setAppleMusicWidevineReplaceOpen(false);
+                }}
+                disabled={appleMusicWidevineUploading}
+              >
+                {t('content.bridge.apple.widevineKeep')}
+              </button>
+            ) : (
+              <button
+                type="button"
+                className="bridge-modal__btn"
+                onClick={() => void refreshAppleMusicWidevine()}
+                disabled={appleMusicWidevineLoading || appleMusicWidevineUploading}
+              >
+                {t('content.bridge.apple.refreshStatus')}
+              </button>
+            )}
             <button
               type="button"
               className="bridge-modal__btn is-primary"
@@ -4619,7 +4666,7 @@ export default function ContentView(): JSX.Element {
             </button>
           </div>
         </div>
-        );
+          );
         return (
         <Modal
           open

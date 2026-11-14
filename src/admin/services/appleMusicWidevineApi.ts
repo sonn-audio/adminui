@@ -5,6 +5,11 @@ export type AppleMusicWidevineStatus = {
   ok: boolean;
   status: 'valid' | 'missing' | 'invalid' | 'error';
   details?: string[];
+  /**
+   * Whose CDM is in use: one uploaded here, or the one the server image was built with.
+   * Absent on a core older than 4.0.0-beta.24, which only knows uploads.
+   */
+  source?: 'uploaded' | 'bundled';
   files?: {
     privateKey: { present: boolean; bytes: number };
     clientId: { present: boolean; bytes: number };

@@ -2441,6 +2441,58 @@
   gap: 10px;
 }
 
+/* A CDM that already works: one line, with the upload panel one click away. */
+.bridge-modal__wv.is-ready {
+  flex-direction: row;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.bridge-modal__wv-check {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--accent);
+  background: var(--accent-soft);
+  border: 1px solid var(--border-accent);
+}
+
+.bridge-modal__wv-ready-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.bridge-modal__wv.is-ready .bridge-modal__wv-desc {
+  margin-top: 1px;
+}
+
+.bridge-modal__wv-link {
+  flex-shrink: 0;
+  appearance: none;
+  background: none;
+  border: 0;
+  padding: 6px 2px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  text-decoration: underline;
+  text-decoration-color: var(--border-strong);
+  text-underline-offset: 3px;
+}
+
+.bridge-modal__wv-link:hover,
+.bridge-modal__wv-link:focus-visible {
+  color: var(--text);
+  text-decoration-color: currentColor;
+}
+
 /* Footer */
 .bridge-modal__foot {
   padding: 16px 24px;
