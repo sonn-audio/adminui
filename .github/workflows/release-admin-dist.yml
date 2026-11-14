@@ -48,6 +48,14 @@ jobs:
             console.log("minCore:", min.trim());
           '
 
+      # A stylesheet that names a token the theme does not define still builds — and then ships a
+      # console with no colours in it. The audit is the only thing that notices, so it gates the release.
+      - name: Check the styles against the theme
+        run: npm run audit:ui:strict
+
+      - name: Typecheck
+        run: npm run typecheck
+
       - name: Build
         run: npm run build
 

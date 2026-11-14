@@ -1,0 +1,34 @@
+# Runs on every push and pull request, so drift is caught where it is written rather than at the
+# release: the types, the style audit (every size, corner, breakpoint and colour comes from
+# `src/admin/styles/theme.css`, and no stylesheet names a token that does not exist), and the build.
+name: Check
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Check the styles against the theme
+        run: npm run audit:ui:strict
+
+      - name: Build
+        run: npm run build

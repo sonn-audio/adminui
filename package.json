@@ -11,8 +11,8 @@
     "build": "vite build",
     "typecheck": "tsc --noEmit",
     "preview": "vite preview",
-    "audit:ui": "bash scripts/audit-ui.sh report",
-    "audit:ui:strict": "bash scripts/audit-ui.sh strict"
+    "audit:ui": "node scripts/audit-ui.mjs",
+    "audit:ui:strict": "node scripts/audit-ui.mjs strict"
   },
   "dependencies": {
     "i18next": "^26.3.0",
