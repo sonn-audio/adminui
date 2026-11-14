@@ -3,9 +3,9 @@
   align-items: center;
   gap: 14px;
   padding: 14px 16px 14px 18px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 12px;
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
+  border-radius: var(--radius-md);
   position: relative;
   overflow: hidden;
 }
@@ -24,24 +24,24 @@
 }
 
 .banner--info::before {
-  background: #60a5fa;
-  box-shadow: 0 0 12px rgba(96, 165, 250, 0.5);
+  background: var(--info);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--info) 50%, transparent);
 }
 
 .banner--warn::before {
   background: var(--warn);
-  box-shadow: 0 0 12px rgba(245, 158, 11, 0.5);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--warn) 50%, transparent);
 }
 
 .banner--error::before {
-  background: var(--danger, #ef4444);
-  box-shadow: 0 0 12px rgba(239, 68, 68, 0.5);
+  background: var(--danger);
+  box-shadow: 0 0 12px color-mix(in srgb, var(--danger) 50%, transparent);
 }
 
 .banner__icon {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -49,18 +49,18 @@
 }
 
 .banner--info .banner__icon {
-  color: #93c5fd;
-  background: rgba(96, 165, 250, 0.1);
+  color: var(--info-bright);
+  background: color-mix(in srgb, var(--info) 10%, transparent);
 }
 
 .banner--warn .banner__icon {
-  color: var(--warn-bright, #fbbf24);
-  background: rgba(245, 158, 11, 0.1);
+  color: var(--warn-bright);
+  background: color-mix(in srgb, var(--warn) 10%, transparent);
 }
 
 .banner--error .banner__icon {
-  color: #fca5a5;
-  background: rgba(239, 68, 68, 0.1);
+  color: var(--danger-bright);
+  background: color-mix(in srgb, var(--danger) 10%, transparent);
 }
 
 .banner__body {
@@ -69,14 +69,14 @@
 }
 
 .banner__title {
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: 700;
   color: var(--text);
   letter-spacing: -0.1px;
 }
 
 .banner__message {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   line-height: 1.5;
   margin-top: 2px;
@@ -97,14 +97,14 @@
   display: inline-flex;
   align-items: center;
   padding: 6px 12px;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.4px;
   font-weight: 700;
   text-transform: uppercase;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
   background: transparent;
   color: var(--text-muted);
   transition: color 0.15s, background 0.15s, border-color 0.15s;
@@ -112,8 +112,8 @@
 
 .banner__btn:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.04);
-  border-color: rgba(255, 255, 255, 0.14);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  border-color: color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
 .banner__btn.is-primary {
@@ -123,8 +123,8 @@
 }
 
 .banner__btn.is-primary:hover {
-  background: var(--accent-bright, #86efac);
-  border-color: var(--accent-bright, #86efac);
+  background: var(--accent-bright);
+  border-color: var(--accent-bright);
   color: var(--accent-on);
 }
 
@@ -134,7 +134,7 @@
   color: var(--text-dim);
   cursor: pointer;
   padding: 4px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -144,5 +144,5 @@
 
 .banner__close:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }

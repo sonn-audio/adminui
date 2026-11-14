@@ -14,12 +14,12 @@
   padding: 9px 16px;
   background: linear-gradient(
     180deg,
-    rgba(245, 158, 11, 0.16),
-    rgba(245, 158, 11, 0.09)
+    color-mix(in srgb, var(--warn) 16%, transparent),
+    color-mix(in srgb, var(--warn) 9%, transparent)
   );
-  border-bottom: 1px solid rgba(245, 158, 11, 0.38);
-  color: var(--warn-bright, #fbbf24);
-  font-size: 13px;
+  border-bottom: 1px solid color-mix(in srgb, var(--warn) 38%, transparent);
+  color: var(--warn-bright);
+  font-size: var(--fs-sm);
   line-height: 1.35;
   text-align: center;
   /* Above the hero, and readable over whatever scrolls beneath it. */
@@ -43,11 +43,11 @@
 .build-notice__tag {
   margin-left: 8px;
   padding: 1px 7px;
-  border: 1px solid rgba(245, 158, 11, 0.4);
-  border-radius: 999px;
-  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid color-mix(in srgb, var(--warn) 40%, transparent);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--warn) 12%, transparent);
   font-family: var(--font-mono, ui-monospace, monospace);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   white-space: nowrap;
 }
 

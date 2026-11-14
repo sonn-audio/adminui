@@ -33,16 +33,16 @@
   align-items: center;
   gap: 10px;
   padding: 8px 10px;
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
 }
 
 .radio-find__art {
   width: 28px;
   height: 28px;
   flex-shrink: 0;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   border: 1px solid var(--border);
   overflow: hidden;
@@ -66,7 +66,7 @@
 }
 
 .radio-find__name {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--text);
   overflow: hidden;
@@ -75,7 +75,7 @@
 }
 
 .radio-find__meta {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   overflow: hidden;
   text-overflow: ellipsis;
@@ -94,19 +94,19 @@
 
 .radio-find__error {
   margin: 6px 0 0;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   line-height: 1.5;
   color: var(--danger);
 }
 
 .radio-find__empty {
   margin: 6px 0 0;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   line-height: 1.5;
   color: var(--text-dim);
 }
 
-@media (max-width: 620px) {
+@media (max-width: 640px) {
   .radio-find__bar {
     flex-wrap: wrap;
   }

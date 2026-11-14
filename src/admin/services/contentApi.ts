@@ -439,8 +439,12 @@ export type TidalLoginStatus =
   | { state: 'done'; userId?: string; userName?: string; countryCode?: string }
   | { state: 'error'; error: string; message: string };
 
-/** Whether the server's environment names the TIDAL client to sign in with (SONN_TIDAL_CLIENT_ID). */
-export async function fetchTidalClientStatus(): Promise<{ envConfigured: boolean }> {
+/**
+ * Whether the server provides the TIDAL client to sign in with, and how: through
+ * SONN_TIDAL_CLIENT_ID (`env`) or built into its image (`bundled`). A core older than
+ * 4.0.0-beta.24 sends no `source`, and only ever means the environment.
+ */
+export async function fetchTidalClientStatus(): Promise<{ envConfigured: boolean; source?: 'env' | 'bundled' | null }> {
   return requestJson(`${API_BASE}/tidal/client`, { errorMessage: 'Failed to read the Tidal client' });
 }
 

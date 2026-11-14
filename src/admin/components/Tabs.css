@@ -4,7 +4,7 @@
   justify-content: center;
   gap: 36px;
   padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  border-bottom: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
   margin-bottom: 20px;
   opacity: 0;
   transform: translateY(-12px);
@@ -25,8 +25,8 @@
   width: 0;
   height: 2px;
   background: var(--accent);
-  border-radius: 1px;
-  box-shadow: 0 0 10px rgba(74, 222, 128, 0.7), 0 0 20px rgba(74, 222, 128, 0.3);
+  border-radius: var(--radius-xs);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent), 0 0 20px color-mix(in srgb, var(--accent) 30%, transparent);
   transition:
     left 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
     width 0.42s cubic-bezier(0.2, 0.8, 0.2, 1);
@@ -63,7 +63,7 @@ body.is-workspace .ws-tabs {
   border: none;
   color: var(--text-dim);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   letter-spacing: 1.8px;
   font-weight: 700;
   text-transform: uppercase;
@@ -83,12 +83,12 @@ body.is-workspace .ws-tabs {
 }
 
 .ws-tab:focus-visible {
-  outline: 2px solid rgba(74, 222, 128, 0.3);
+  outline: 2px solid color-mix(in srgb, var(--accent) 30%, transparent);
   outline-offset: 4px;
-  border-radius: 4px;
+  border-radius: var(--radius-xs);
 }
 
-@media (max-width: 880px) {
+@media (max-width: 900px) {
   .ws-tabs {
     gap: 22px;
     overflow-x: auto;
@@ -110,7 +110,7 @@ body.is-workspace .ws-tabs {
     gap: 18px;
   }
   .ws-tab {
-    font-size: 10px;
+    font-size: var(--fs-2xs);
     letter-spacing: 1.4px;
     padding: 8px 4px 12px;
   }

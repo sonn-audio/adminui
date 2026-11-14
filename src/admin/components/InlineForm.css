@@ -1,7 +1,7 @@
 .inline-form {
-  background: rgba(255, 255, 255, 0.015);
-  border: 1px dashed rgba(255, 255, 255, 0.14);
-  border-radius: 14px;
+  background: color-mix(in srgb, var(--ink) 1.5%, transparent);
+  border: 1px dashed color-mix(in srgb, var(--ink) 14%, transparent);
+  border-radius: var(--radius-md);
   overflow: hidden;
   animation: inline-form-in 0.35s var(--spring, cubic-bezier(0.2, 0.8, 0.2, 1));
 }
@@ -25,7 +25,7 @@
 
 .inline-form__eyebrow {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.8px;
   color: var(--accent);
   font-weight: 700;
@@ -42,11 +42,11 @@
   height: 6px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 6px rgba(74, 222, 128, 0.5);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--accent) 50%, transparent);
 }
 
 .inline-form__title {
-  font-size: 17px;
+  font-size: var(--fs-lg);
   font-weight: 700;
   letter-spacing: -0.2px;
   color: var(--text);
@@ -54,7 +54,7 @@
 }
 
 .inline-form__desc {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   line-height: 1.5;
   margin: 0;
@@ -81,7 +81,7 @@
 
 .inline-form__field-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.4px;
   color: var(--text-dim);
   font-weight: 700;
@@ -89,23 +89,23 @@
 }
 
 .inline-form__field-optional {
-  color: #4b5563;
+  color: var(--text-faint);
   font-weight: 500;
   text-transform: none;
   letter-spacing: 0;
   margin-left: 6px;
-  font-size: 10px;
+  font-size: var(--fs-2xs);
 }
 
 .inline-form input.inline-form__input,
 .inline-form__input {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 8px;
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
+  border-radius: var(--radius-sm);
   padding: 10px 12px;
   color: var(--text);
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   transition: border-color 0.15s, background 0.15s;
   outline: none;
   width: 100%;
@@ -114,13 +114,13 @@
 .inline-form__input.is-mono,
 .inline-form input.inline-form__input.is-mono {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--fs-xs);
   letter-spacing: -0.1px;
 }
 
 .inline-form__input:focus {
-  border-color: rgba(74, 222, 128, 0.3);
-  background: rgba(255, 255, 255, 0.06);
+  border-color: color-mix(in srgb, var(--accent) 30%, transparent);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .inline-form__input::placeholder {
@@ -128,7 +128,7 @@
 }
 
 .inline-form__help {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   line-height: 1.5;
   margin: 0;
@@ -147,13 +147,13 @@
 /* Group section labels — quietly divide the form into Connection / Access / ... */
 .inline-form__group-label {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   letter-spacing: 2px;
-  color: #4b5563;
+  color: var(--text-faint);
   font-weight: 700;
   text-transform: uppercase;
   padding-top: 8px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
   margin-top: 2px;
 }
 
@@ -183,8 +183,8 @@
 .inline-form__toggle {
   width: 36px;
   height: 20px;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--ink) 8%, transparent);
   position: relative;
   cursor: pointer;
   transition: background 0.2s;
@@ -201,9 +201,9 @@
   width: 16px;
   height: 16px;
   border-radius: 50%;
-  background: #ffffff;
+  background: var(--white);
   transition: transform 0.25s var(--spring, cubic-bezier(0.2, 0.8, 0.2, 1));
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--shade) 30%, transparent);
 }
 
 .inline-form__toggle.is-on {
@@ -215,11 +215,11 @@
 }
 
 .inline-form__toggle:hover {
-  background: rgba(255, 255, 255, 0.14);
+  background: color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
 .inline-form__toggle.is-on:hover {
-  background: var(--accent-bright, #86efac);
+  background: var(--accent-bright);
 }
 
 .inline-form__toggle-text {
@@ -229,13 +229,13 @@
 }
 
 .inline-form__toggle-title {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text);
   font-weight: 500;
 }
 
 .inline-form__toggle-sub {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
 }
 
@@ -243,15 +243,15 @@
 .inline-form__adv-toggle {
   align-self: flex-start;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.2px;
   font-weight: 700;
   text-transform: uppercase;
   padding: 7px 12px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   cursor: pointer;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
+  background: color-mix(in srgb, var(--ink) 3%, transparent);
   color: var(--text-dim);
   display: inline-flex;
   align-items: center;
@@ -262,7 +262,7 @@
 
 .inline-form__adv-toggle:hover {
   color: var(--text-muted);
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
 .inline-form__adv-toggle svg {
@@ -271,7 +271,7 @@
 
 .inline-form__adv-toggle.is-open {
   color: var(--text);
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
 .inline-form__adv-toggle.is-open svg {
@@ -302,28 +302,28 @@
   align-items: center;
   justify-content: flex-end;
   gap: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
   margin-top: 4px;
 }
 
 .inline-form__btn {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   letter-spacing: 1.8px;
   font-weight: 700;
   text-transform: uppercase;
   padding: 10px 18px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background 0.15s, color 0.15s, border-color 0.15s, transform 0.15s;
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
   color: var(--text-muted);
 }
 
 .inline-form__btn:hover:not(:disabled) {
   color: var(--text);
-  border-color: rgba(255, 255, 255, 0.14);
+  border-color: color-mix(in srgb, var(--ink) 14%, transparent);
 }
 
 .inline-form__btn.is-primary {
@@ -333,8 +333,8 @@
 }
 
 .inline-form__btn.is-primary:hover:not(:disabled) {
-  background: var(--accent-bright, #86efac);
-  border-color: var(--accent-bright, #86efac);
+  background: var(--accent-bright);
+  border-color: var(--accent-bright);
   color: var(--accent-on);
   transform: translateY(-1px);
 }

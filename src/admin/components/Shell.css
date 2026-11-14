@@ -113,7 +113,7 @@ body.is-workspace #app {
 
 .top-strip__version {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   letter-spacing: 0.4px;
   color: var(--text-dim);
   font-weight: 700;
@@ -149,13 +149,13 @@ body.is-workspace #app {
   align-items: center;
   justify-content: center;
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 700;
   transition: background 0.4s ease, color 0.4s ease;
 }
 
 body.is-unpaired .system-id__avatar {
-  background: rgba(245, 158, 11, 0.16);
+  background: color-mix(in srgb, var(--warn) 16%, transparent);
   color: var(--warn);
 }
 
@@ -175,7 +175,7 @@ body.is-workspace .system-id__avatar {
  */
 .system-id__name {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 700;
   letter-spacing: 0.3px;
   color: var(--text);
@@ -197,7 +197,7 @@ body.is-workspace .system-id__avatar {
   background: none;
   color: var(--text-muted);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 0.2em;
   font-weight: 700;
   text-transform: uppercase;
@@ -232,7 +232,7 @@ button.top-chip {
 .top-chip--warn,
 .top-chip--warn svg,
 .top-chip--warn:hover {
-  color: var(--warn, #e0a23b);
+  color: var(--warn);
 }
 
 .top-chip--warn:hover {
@@ -270,7 +270,7 @@ button.top-chip {
   padding: 3px;
   background: none;
   border: 1px solid transparent;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   cursor: pointer;
   color: var(--text);
   font: inherit;
@@ -326,7 +326,7 @@ button.top-chip {
 
 .user-pill__avatar-initial {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 700;
   display: none;
 }
@@ -393,7 +393,7 @@ button.top-chip {
 
 .user-pill__name {
   font-family: var(--font-mono);
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 700;
   letter-spacing: 0.3px;
   color: var(--text);
@@ -431,12 +431,12 @@ button.top-chip {
   top: calc(100% + 8px);
   right: 0;
   min-width: 240px;
-  background: rgba(21, 24, 29, 0.95);
+  background: color-mix(in srgb, var(--bg-card) 95%, transparent);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-md);
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--shade) 50%, transparent), 0 0 0 1px color-mix(in srgb, var(--ink) 2%, transparent);
   padding: 4px;
   opacity: 0;
   transform: translateY(-6px) scale(0.96);
@@ -471,7 +471,7 @@ button.top-chip {
   color: var(--accent);
   font-family: var(--font-mono);
   font-weight: 700;
-  font-size: 14px;
+  font-size: var(--fs-md);
   flex-shrink: 0;
 }
 
@@ -480,7 +480,7 @@ button.top-chip {
 }
 
 .user-menu__name {
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: 700;
   color: var(--text);
   letter-spacing: -0.1px;
@@ -489,7 +489,7 @@ button.top-chip {
 
 .user-menu__role {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.2px;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -500,7 +500,7 @@ button.top-chip {
 
 .user-menu__label {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.5px;
   text-transform: uppercase;
   color: var(--text-dim);
@@ -516,7 +516,7 @@ button.top-chip {
   margin: 0 7px 4px;
   background: var(--surface-soft);
   border: 1px solid var(--border);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
 }
 
 .user-menu__theme-btn {
@@ -526,13 +526,13 @@ button.top-chip {
   justify-content: center;
   gap: 7px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1px;
   text-transform: uppercase;
   font-weight: 700;
   color: var(--text-muted);
   padding: 8px;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   border: none;
   background: none;
   cursor: pointer;
@@ -546,7 +546,7 @@ button.top-chip {
 
 .user-menu__theme-btn.is-active {
   background: var(--accent);
-  color: var(--accent-on, #062812);
+  color: var(--accent-on);
 }
 
 .user-menu__theme-btn:disabled {
@@ -563,11 +563,11 @@ button.top-chip {
   align-items: center;
   gap: 10px;
   padding: 9px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
   transition: background 0.12s, color 0.12s;
   color: var(--text-muted);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 500;
   text-decoration: none;
   background: none;
@@ -592,20 +592,20 @@ button.top-chip {
 }
 
 .user-menu__item--danger {
-  color: var(--danger, #ef4444);
+  color: var(--danger);
 }
 
 .user-menu__item--danger:hover {
-  color: #fca5a5;
-  background: rgba(239, 68, 68, 0.08);
+  color: var(--danger-bright);
+  background: color-mix(in srgb, var(--danger) 8%, transparent);
 }
 
 .user-menu__item--danger svg {
-  color: var(--danger, #ef4444);
+  color: var(--danger);
 }
 
 .user-menu__item--danger:hover svg {
-  color: #fca5a5;
+  color: var(--danger-bright);
 }
 
 .user-menu__arrow {
@@ -628,7 +628,7 @@ button.top-chip {
   margin-top: auto;
   border-top: 1px solid var(--border);
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.5px;
   color: var(--text-dim);
   font-weight: 700;
@@ -691,7 +691,7 @@ button.top-chip {
     flex-direction: column;
     gap: 8px;
     padding-top: 20px;
-    font-size: 9px;
+    font-size: var(--fs-2xs);
     text-align: center;
   }
   .shell-foot__left {
@@ -710,7 +710,7 @@ button.top-chip {
   align-items: center;
   gap: 9px;
   padding: 8px 12px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: none;
   background: none;
   width: 100%;
@@ -718,7 +718,7 @@ button.top-chip {
   cursor: pointer;
   color: var(--text-muted);
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   transition: background 0.12s, color 0.12s;
 }
 .server-switch__item:hover:not(:disabled) {
@@ -749,12 +749,12 @@ button.top-chip {
 }
 .server-switch__host {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   color: var(--text-dim);
 }
 .server-switch__tag {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1px;
   text-transform: uppercase;
   color: var(--accent);

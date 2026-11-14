@@ -3,9 +3,9 @@
   align-items: center;
   gap: 4px;
   padding: 5px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
+  border-radius: var(--radius-pill);
   margin: 0 0 20px;
   position: relative;
 }
@@ -18,8 +18,8 @@
   left: 0;
   width: 0;
   background: var(--accent);
-  border-radius: 999px;
-  box-shadow: 0 4px 16px rgba(74, 222, 128, 0.25);
+  border-radius: var(--radius-pill);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--accent) 25%, transparent);
   transition:
     left 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
     width 0.42s cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -34,7 +34,7 @@
 }
 
 .subtabs:hover .subtabs__indicator {
-  background: var(--accent-bright, #86efac);
+  background: var(--accent-bright);
 }
 
 .subtab {
@@ -42,9 +42,9 @@
   align-items: center;
   gap: 8px;
   padding: 8px 16px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-family: var(--font-sans);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   letter-spacing: -0.1px;
   color: var(--text-muted);
@@ -67,7 +67,7 @@
 
 .subtab__badge {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 0.5px;
   opacity: 0.7;
   font-weight: 700;

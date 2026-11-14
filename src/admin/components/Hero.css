@@ -30,7 +30,7 @@ body.is-workspace .hero-content {
   /* The one element this console shares with both players — see `@view-transition` in `theme.css`. */
   view-transition-name: sonn-mark;
   color: var(--accent);
-  filter: drop-shadow(0 0 24px rgba(74, 222, 128, 0.3));
+  filter: drop-shadow(0 0 24px color-mix(in srgb, var(--accent) 30%, transparent));
   margin-bottom: 24px;
   position: relative;
   transform: scale(1.4);
@@ -43,13 +43,13 @@ body.is-workspace .hero-content {
 
 body.is-success .hero-mark {
   transform: scale(1.4);
-  filter: drop-shadow(0 0 36px rgba(74, 222, 128, 0.55));
+  filter: drop-shadow(0 0 36px color-mix(in srgb, var(--accent) 55%, transparent));
 }
 
 body.is-workspace .hero-mark {
   transform: scale(0.75);
   margin-bottom: 8px;
-  filter: drop-shadow(0 0 18px rgba(74, 222, 128, 0.4));
+  filter: drop-shadow(0 0 18px color-mix(in srgb, var(--accent) 40%, transparent));
 }
 
 .hero-mark::before,
@@ -62,7 +62,7 @@ body.is-workspace .hero-mark {
   width: 100px;
   height: 100px;
   border-radius: 50%;
-  border: 1px solid rgba(74, 222, 128, 0.6);
+  border: 1px solid color-mix(in srgb, var(--accent) 60%, transparent);
   pointer-events: none;
   opacity: 0;
 }
@@ -84,15 +84,15 @@ body.is-workspace .hero-mark {
 }
 
 @keyframes hero-mark-glow {
-  0%   { filter: drop-shadow(0 0 0 rgba(74, 222, 128, 0)); }
-  25%  { filter: drop-shadow(0 0 12px rgba(74, 222, 128, 0.30)); }
-  55%  { filter: drop-shadow(0 0 28px rgba(74, 222, 128, 0.50)); }
-  80%  { filter: drop-shadow(0 0 56px rgba(74, 222, 128, 0.85)); }
-  100% { filter: drop-shadow(0 0 24px rgba(74, 222, 128, 0.30)); }
+  0%   { filter: drop-shadow(0 0 0 transparent); }
+  25%  { filter: drop-shadow(0 0 12px color-mix(in srgb, var(--accent) 30%, transparent)); }
+  55%  { filter: drop-shadow(0 0 28px color-mix(in srgb, var(--accent) 50%, transparent)); }
+  80%  { filter: drop-shadow(0 0 56px color-mix(in srgb, var(--accent) 85%, transparent)); }
+  100% { filter: drop-shadow(0 0 24px color-mix(in srgb, var(--accent) 30%, transparent)); }
 }
 
 body.is-unpaired .hero-mark {
-  filter: drop-shadow(0 0 24px rgba(245, 158, 11, 0.3));
+  filter: drop-shadow(0 0 24px color-mix(in srgb, var(--warn) 30%, transparent));
 }
 
 .hero-mark svg {
@@ -192,7 +192,7 @@ body.is-unpaired .hero-mark {
   align-items: baseline;
   gap: 0.33em;
   font-family: var(--font-display);
-  font-size: 30px;
+  font-size: var(--fs-display);
   font-weight: 800;
   letter-spacing: -0.03em;
   color: var(--text);
@@ -229,12 +229,12 @@ body.is-unpaired .hero-mark {
 }
 
 body.is-workspace .hero-wordmark {
-  font-size: 25px;
+  font-size: var(--fs-2xl);
   margin-bottom: 6px;
 }
 
 .hero-tagline {
-  font-size: 14px;
+  font-size: var(--fs-md);
   color: var(--text-muted);
   max-width: 520px;
   line-height: 1.5;
@@ -263,9 +263,9 @@ body.is-workspace .hero-tagline {
   align-items: center;
   gap: 0;
   padding: 10px 18px;
-  background: rgba(255, 255, 255, 0.02);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 999px;
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
+  border: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
+  border-radius: var(--radius-pill);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   transition: border-color 0.6s ease, background 0.6s ease;
@@ -274,8 +274,8 @@ body.is-workspace .hero-tagline {
 }
 
 body.is-unpaired .diag-strip {
-  border-color: rgba(245, 158, 11, 0.2);
-  background: rgba(245, 158, 11, 0.04);
+  border-color: color-mix(in srgb, var(--warn) 20%, transparent);
+  background: color-mix(in srgb, var(--warn) 4%, transparent);
 }
 
 .diag-item {
@@ -328,7 +328,7 @@ body:not(.is-workspace) .diag-item:not(:first-child) {
   transform: translateY(-50%);
   width: 1px;
   height: 10px;
-  background: rgba(255, 255, 255, 0.06);
+  background: color-mix(in srgb, var(--ink) 6%, transparent);
   opacity: 1;
   transition: opacity 0.35s ease 0.55s;
 }
@@ -340,7 +340,7 @@ body:not(.is-workspace) .diag-item + .diag-item::before {
 
 .diag-label {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.6px;
   color: var(--text-dim);
   font-weight: 700;
@@ -349,7 +349,7 @@ body:not(.is-workspace) .diag-item + .diag-item::before {
 
 .diag-value {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text);
   font-weight: 700;
 }
@@ -375,38 +375,38 @@ body:not(.is-workspace) .diag-item + .diag-item::before {
   height: 6px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 8px rgba(74, 222, 128, 0.6);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent);
   animation: pulse-dot 1.8s ease-out infinite;
 }
 
 .pulse-dot--warn {
   background: var(--warn);
-  box-shadow: 0 0 8px rgba(245, 158, 11, 0.6);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--warn) 60%, transparent);
   animation-name: pulse-dot-warn;
 }
 
 .pulse-dot--error {
   background: var(--danger);
-  box-shadow: 0 0 8px rgba(239, 68, 68, 0.6);
+  box-shadow: 0 0 8px color-mix(in srgb, var(--danger) 60%, transparent);
   animation-name: pulse-dot-error;
 }
 
 @keyframes pulse-dot {
-  0%   { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55), 0 0 8px rgba(74, 222, 128, 0.6); }
-  70%  { box-shadow: 0 0 0 7px rgba(74, 222, 128, 0), 0 0 8px rgba(74, 222, 128, 0.6); }
-  100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0), 0 0 8px rgba(74, 222, 128, 0.6); }
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent), 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent); }
+  70%  { box-shadow: 0 0 0 7px transparent, 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent, 0 0 8px color-mix(in srgb, var(--accent) 60%, transparent); }
 }
 
 @keyframes pulse-dot-warn {
-  0%   { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.55), 0 0 8px rgba(245, 158, 11, 0.6); }
-  70%  { box-shadow: 0 0 0 7px rgba(245, 158, 11, 0), 0 0 8px rgba(245, 158, 11, 0.6); }
-  100% { box-shadow: 0 0 0 0 rgba(245, 158, 11, 0), 0 0 8px rgba(245, 158, 11, 0.6); }
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--warn) 55%, transparent), 0 0 8px color-mix(in srgb, var(--warn) 60%, transparent); }
+  70%  { box-shadow: 0 0 0 7px transparent, 0 0 8px color-mix(in srgb, var(--warn) 60%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent, 0 0 8px color-mix(in srgb, var(--warn) 60%, transparent); }
 }
 
 @keyframes pulse-dot-error {
-  0%   { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.55), 0 0 8px rgba(239, 68, 68, 0.6); }
-  70%  { box-shadow: 0 0 0 7px rgba(239, 68, 68, 0), 0 0 8px rgba(239, 68, 68, 0.6); }
-  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0), 0 0 8px rgba(239, 68, 68, 0.6); }
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--danger) 55%, transparent), 0 0 8px color-mix(in srgb, var(--danger) 60%, transparent); }
+  70%  { box-shadow: 0 0 0 7px transparent, 0 0 8px color-mix(in srgb, var(--danger) 60%, transparent); }
+  100% { box-shadow: 0 0 0 0 transparent, 0 0 8px color-mix(in srgb, var(--danger) 60%, transparent); }
 }
 
 @media (max-width: 640px) {
@@ -414,10 +414,10 @@ body:not(.is-workspace) .diag-item + .diag-item::before {
     padding: 40px 0 24px;
   }
   .hero-wordmark {
-    font-size: 25px;
+    font-size: var(--fs-2xl);
   }
   .hero-tagline {
-    font-size: 13px;
+    font-size: var(--fs-sm);
     margin-bottom: 24px;
   }
   .diag-strip {
@@ -430,11 +430,11 @@ body:not(.is-workspace) .diag-item + .diag-item::before {
     padding: 0 10px;
   }
   .diag-label {
-    font-size: 8px;
+    font-size: var(--fs-2xs);
     letter-spacing: 1.3px;
   }
   .diag-value {
-    font-size: 10px;
+    font-size: var(--fs-2xs);
   }
 }
 

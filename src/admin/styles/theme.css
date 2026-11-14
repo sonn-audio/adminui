@@ -115,37 +115,37 @@
   /* --- Legacy tokens (still consumed by Setup/Content/Logs/Zones until each
          view is rewritten on the redesign palette above; aliased to the new
          tokens so the visual baseline matches the mockup). --- */
-  --surface-0: var(--bg-card);
+  --bg-card: var(--bg-card);
   --surface-1: #1c1f25;
   --surface-2: #232730;
-  --color-bg: var(--bg);
-  --color-surface: var(--bg-card);
-  --color-surface-muted: #1c1f25;
+  --bg: var(--bg);
+  --bg-card: var(--bg-card);
+  --surface-1: #1c1f25;
   --color-surface-alt: #232730;
-  --color-text: var(--text);
-  --color-subtle: #cbd1d9;
-  --color-muted: var(--text-muted);
-  --color-faint: var(--text-dim);
+  --text: var(--text);
+  --text-subtle: #cbd1d9;
+  --text-muted: var(--text-muted);
+  --text-dim: var(--text-dim);
   /* The hairline, at the weight both players draw theirs (`--line` / `--hair`): 7%, not 6%. One
      alpha for every divider in the product. */
-  --color-border: rgba(255, 255, 255, 0.07);
-  --color-border-strong: rgba(255, 255, 255, 0.14);
-  --color-border-soft: rgba(255, 255, 255, 0.04);
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.14);
+  --border-soft: rgba(255, 255, 255, 0.04);
   --border-whisper: rgba(255, 255, 255, 0.03);
   --border-faint: rgba(255, 255, 255, 0.05);
-  --border-soft: var(--color-border-soft);
-  --border: var(--color-border);
-  --border-strong: var(--color-border-strong);
+  --border-soft: var(--border-soft);
+  --border: var(--border);
+  --border-strong: var(--border-strong);
   --border-input: rgba(255, 255, 255, 0.12);
-  --color-accent: var(--accent);
-  --color-brand: var(--accent);
-  --color-on-brand: var(--accent-on);
-  --color-highlight: rgba(74, 222, 128, 0.08);
+  --accent: var(--accent);
+  --accent: var(--accent);
+  --accent-on: var(--accent-on);
+  --accent-soft: rgba(74, 222, 128, 0.08);
   --color-success: var(--accent-deep);
   --color-warning: var(--warn);
   --color-info: #2563eb;
-  --color-danger: var(--danger);
-  --color-on-danger: #ffffff;
+  --danger: var(--danger);
+  --white: #ffffff;
   --shadow-soft: 0 1px 0 rgba(246, 246, 246, 0.05), 0 16px 44px -36px rgba(0, 0, 0, 0.68);
   --shadow-md: 0 1px 0 rgba(0, 0, 0, 0.04), 0 22px 54px -44px rgba(0, 0, 0, 0.24);
   --shadow-lg: 0 1px 0 rgba(0, 0, 0, 0.05), 0 30px 70px -52px rgba(0, 0, 0, 0.28);
@@ -157,8 +157,8 @@
   --radius-pill: 999px;
   --card-radius: 12px;
   --card-border-color: rgba(255, 255, 255, 0.06);
-  --card-shadow: var(--shadow-soft);
-  --card-bg: var(--bg-card);
+  --shadow-soft: var(--shadow-soft);
+  --bg-card: var(--bg-card);
   --card-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.04);
   --panel-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.03);
   /* How wide the workspace may grow — one token, where six hardcoded caps used
@@ -198,14 +198,14 @@
   --card-pad-sm: var(--space-4);
   --card-gap: var(--space-4);
   --card-gap-sm: var(--space-3);
-  --shell-radius: 12px;
+  --radius-md: 12px;
   --shell-border: rgba(255, 255, 255, 0.06);
   --shell-bg: var(--bg-card);
   --shell-shadow: var(--shadow-soft);
-  --text-xs: 0.72rem;
-  --text-sm: 0.84rem;
-  --text-md: 0.98rem;
-  --text-lg: 1.1rem;
+  --fs-xs: 0.72rem;
+  --fs-sm: 0.84rem;
+  --fs-lg: 0.98rem;
+  --fs-lg: 1.1rem;
   --control-height: 44px;
   --control-height-compact: 30px;
   --btn-pad-y: 0.7rem;
@@ -214,7 +214,7 @@
   --ring-outline: 2px solid rgba(74, 222, 128, 0.5);
   /* The pointer's own light on card surfaces — see the spotlight block below. */
   --spotlight: rgba(255, 255, 255, 0.05);
-  --control-bg: var(--bg-input);
+  --bg-input: var(--bg-input);
   --control-bg-top: var(--bg-input);
   --z-header: 40;
   --z-alert: 7000;
@@ -276,44 +276,44 @@ body[data-theme='light'] {
   --spotlight: rgba(17, 24, 39, 0.045);
 
   /* legacy aliases (still consumed by older panels) */
-  --surface-0: #FFFFFF;
+  --bg-card: #FFFFFF;
   --surface-1: #F8F9FB;
   --surface-2: #EEF0F4;
-  --color-bg: var(--bg);
-  --color-surface: var(--bg-card);
-  --color-surface-muted: #F8F9FB;
+  --bg: var(--bg);
+  --bg-card: var(--bg-card);
+  --surface-1: #F8F9FB;
   --color-surface-alt: #EEF0F4;
-  --color-text: var(--text);
-  --color-subtle: #2D333D;
-  --color-muted: var(--text-muted);
-  --color-faint: var(--text-dim);
-  --color-border: var(--border);
-  --color-border-strong: var(--border-strong);
-  --color-border-soft: rgba(17, 24, 39, 0.06);
+  --text: var(--text);
+  --text-subtle: #2D333D;
+  --text-muted: var(--text-muted);
+  --text-dim: var(--text-dim);
+  --border: var(--border);
+  --border-strong: var(--border-strong);
+  --border-soft: rgba(17, 24, 39, 0.06);
   --border-whisper: rgba(17, 24, 39, 0.04);
   --border-faint: rgba(17, 24, 39, 0.06);
-  --border-soft: var(--color-border-soft);
+  --border-soft: var(--border-soft);
   --border-input: rgba(17, 24, 39, 0.18);
-  --color-accent: var(--accent);
-  --color-brand: var(--accent);
-  --color-on-brand: var(--accent-on);
-  --color-highlight: rgba(22, 163, 74, 0.12);
+  --accent: var(--accent);
+  --accent: var(--accent);
+  --accent-on: var(--accent-on);
+  --accent-soft: rgba(22, 163, 74, 0.12);
   --color-success: var(--accent);
   --color-warning: var(--warn);
   --color-info: var(--info);
-  --color-danger: var(--danger);
-  --color-on-danger: #FFFFFF;
+  --danger: var(--danger);
+  --white: #FFFFFF;
   --shadow-soft: 0 1px 0 rgba(17, 24, 39, 0.04), 0 16px 44px -36px rgba(17, 24, 39, 0.28);
   --shadow-md: 0 1px 0 rgba(17, 24, 39, 0.04), 0 22px 54px -44px rgba(17, 24, 39, 0.18);
   --shadow-lg: 0 1px 0 rgba(17, 24, 39, 0.05), 0 30px 70px -52px rgba(17, 24, 39, 0.22);
   --shadow-float: 0 26px 56px -44px rgba(17, 24, 39, 0.4);
   --card-border-color: var(--border);
-  --card-shadow: var(--shadow-soft);
-  --card-bg: var(--bg-card);
+  --shadow-soft: var(--shadow-soft);
+  --bg-card: var(--bg-card);
   --card-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.6);
   --panel-sheen: inset 0 1px 0 rgba(255, 255, 255, 0.5);
   --shell-border: var(--border);
-  --control-bg: var(--bg-input);
+  --bg-input: var(--bg-input);
   --control-bg-top: var(--bg-input);
 }
 
@@ -351,7 +351,7 @@ body[data-theme='light']::before {
 body[data-theme='light'] select {
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23374151' stroke-width='1.6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, var(--surface-0) 0%, var(--surface-1) 100%);
+    linear-gradient(180deg, var(--bg-card) 0%, var(--surface-1) 100%);
 }
 
 body[data-theme='light'] .zones-eyebrow::before,
@@ -477,8 +477,8 @@ body[data-theme='light'] .diag-strip {
   --card-pad-sm: var(--space-3);
   --card-gap: var(--space-3);
   --card-gap-sm: var(--space-2);
-  --text-sm: 0.82rem;
-  --text-md: 0.95rem;
+  --fs-sm: 0.82rem;
+  --fs-lg: 0.95rem;
   --control-height: 40px;
   --control-height-compact: 28px;
   --btn-pad-y: 0.6rem;
@@ -541,7 +541,7 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: var(--fs-lg);
   letter-spacing: 0.005em;
   position: relative;
   overflow-x: hidden;
@@ -600,22 +600,22 @@ a:hover {
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.2em;
-  font-size: 10px;
-  color: var(--color-faint);
+  font-size: var(--fs-2xs);
+  color: var(--text-dim);
 }
 
 .page-hero__title {
   margin: 0;
   font-size: clamp(1.7rem, 4vw, 2.2rem);
   font-weight: 600;
-  color: var(--color-text);
+  color: var(--text);
   line-height: 1.06;
 }
 
 .page-hero__subtitle {
   margin: 0.35rem 0 0;
-  color: var(--color-subtle);
-  font-size: var(--text-md);
+  color: var(--text-subtle);
+  font-size: var(--fs-lg);
   line-height: 1.5;
 }
 
@@ -784,13 +784,13 @@ button.primary,
 button.secondary,
 button.danger,
 button.ghost {
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: var(--btn-pad-y) var(--btn-pad-x);
   font-weight: 600;
   letter-spacing: 0.01em;
   border: 1px solid var(--border);
-  background: var(--surface-0);
-  color: var(--color-text);
+  background: var(--bg-card);
+  color: var(--text);
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -803,7 +803,7 @@ button.ghost {
     transform 0.16s ease;
   cursor: pointer;
   font-family: var(--font-sans);
-  font-size: 0.95rem;
+  font-size: var(--fs-md);
   min-height: var(--control-height);
 }
 
@@ -817,32 +817,32 @@ button.ghost:not(:disabled):active {
 
 .btn--primary,
 button.primary {
-  background: var(--color-brand);
-  color: var(--color-on-brand);
-  border-color: var(--color-brand);
+  background: var(--accent);
+  color: var(--accent-on);
+  border-color: var(--accent);
   box-shadow: none;
 }
 
 .btn--secondary,
 button.secondary {
-  background: var(--surface-0);
-  color: var(--color-text);
+  background: var(--bg-card);
+  color: var(--text);
   border-color: var(--border);
   box-shadow: none;
 }
 
 .btn--danger,
 button.danger {
-  border-color: var(--color-danger);
-  color: var(--color-on-danger);
-  background: var(--color-danger);
+  border-color: var(--danger);
+  color: var(--white);
+  background: var(--danger);
 }
 
 .btn--ghost,
 button.ghost {
   background: transparent;
   border-color: var(--border-soft);
-  color: var(--color-text);
+  color: var(--text);
 }
 
 .btn:disabled,
@@ -925,9 +925,9 @@ button.ghost:not(:disabled):hover {
 }
 
 .btn--compact {
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   padding: 0.1rem 0.6rem;
-  font-size: 0.72rem;
+  font-size: var(--fs-xs);
   min-height: var(--control-height-compact);
   text-transform: none;
 }
@@ -939,7 +939,7 @@ button.ghost:not(:disabled):hover {
 .btn--danger-link {
   border: 1px solid transparent;
   background: transparent;
-  color: var(--color-danger);
+  color: var(--danger);
 }
 
 .btn--danger-link:not(:disabled):hover {
@@ -950,20 +950,20 @@ button.ghost:not(:disabled):hover {
 select {
   appearance: none;
   border: 1px solid var(--border-input);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 0.55rem 2.4rem 0.55rem 0.9rem;
-  background-color: var(--control-bg);
+  background-color: var(--bg-input);
   /* Chevron first: it is the topmost layer, so the surface gradient below it
      fills the control without painting over the only hint that this opens. */
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%23e9eef6' stroke-width='1.6'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M6 9l6 6 6-6'/%3E%3C/svg%3E"),
-    linear-gradient(180deg, var(--surface-0) 0%, var(--surface-1) 100%);
+    linear-gradient(180deg, var(--bg-card) 0%, var(--surface-1) 100%);
   background-repeat: no-repeat, no-repeat;
   background-position: right 0.9rem center, 0 0;
   background-size: 0.9rem, 100% 100%;
-  font-size: 0.95rem;
+  font-size: var(--fs-md);
   font-family: var(--font-sans);
-  color: var(--color-text);
+  color: var(--text);
   line-height: 1.2;
   min-height: var(--control-height);
   box-shadow: none;
@@ -980,7 +980,7 @@ select:disabled {
   opacity: 0.55;
   cursor: not-allowed;
   background-color: var(--surface-2);
-  color: var(--color-faint);
+  color: var(--text-dim);
 }
 
 /* Default styling for naked inputs (without a wrapping component). Wrapped in
@@ -994,11 +994,11 @@ select:disabled {
   textarea
 ) {
   border: 1px solid var(--border-input);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 0.65rem 0.8rem;
-  background: var(--control-bg);
-  font-size: 0.95rem;
-  color: var(--color-text);
+  background: var(--bg-input);
+  font-size: var(--fs-md);
+  color: var(--text);
   font-family: var(--font-sans);
   min-height: var(--control-height);
   box-shadow: none;
@@ -1027,7 +1027,7 @@ select:disabled {
   opacity: 0.55;
   cursor: not-allowed;
   background-color: var(--surface-2);
-  color: var(--color-faint);
+  color: var(--text-dim);
 }
 
 .sr-only {

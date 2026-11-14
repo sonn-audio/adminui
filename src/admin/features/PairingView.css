@@ -8,12 +8,12 @@
 .pairing-card {
   width: min(600px, 92vw);
   padding: 32px;
-  background: rgba(21, 24, 29, 0.7);
+  background: color-mix(in srgb, var(--bg-card) 70%, transparent);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-  border-radius: 16px;
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+  border: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 48px color-mix(in srgb, var(--shade) 40%, transparent);
   position: relative;
   overflow: hidden;
   text-align: left;
@@ -45,7 +45,7 @@
 
 .pairing-eyebrow {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 2.5px;
   color: var(--accent);
   font-weight: 700;
@@ -66,7 +66,7 @@
 }
 
 .pairing-title {
-  font-size: 26px;
+  font-size: var(--fs-2xl);
   font-weight: 700;
   letter-spacing: -0.6px;
   color: var(--text);
@@ -75,7 +75,7 @@
 }
 
 .pairing-sub {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   line-height: 1.55;
   margin: 0;
@@ -87,7 +87,7 @@
   align-items: flex-start;
   padding: 20px 4px;
   margin-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .pairing-status__dot {
@@ -95,7 +95,7 @@
   height: 12px;
   border-radius: 50%;
   background: var(--accent);
-  box-shadow: 0 0 10px rgba(74, 222, 128, 0.7);
+  box-shadow: 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent);
   animation: pairing-pulse 1.8s ease-out infinite;
   flex-shrink: 0;
   margin-top: 4px;
@@ -103,13 +103,13 @@
 
 @keyframes pairing-pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.55), 0 0 10px rgba(74, 222, 128, 0.7);
+    box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 55%, transparent), 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent);
   }
   70% {
-    box-shadow: 0 0 0 8px rgba(74, 222, 128, 0), 0 0 10px rgba(74, 222, 128, 0.7);
+    box-shadow: 0 0 0 8px transparent, 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(74, 222, 128, 0), 0 0 10px rgba(74, 222, 128, 0.7);
+    box-shadow: 0 0 0 0 transparent, 0 0 10px color-mix(in srgb, var(--accent) 70%, transparent);
   }
 }
 
@@ -119,28 +119,28 @@
 }
 
 .pairing-status__title {
-  font-size: 15px;
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--text);
   margin-bottom: 4px;
 }
 
 .pairing-status__sub {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   line-height: 1.55;
 }
 
 .pairing-steps-label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.8px;
   color: var(--text-dim);
   font-weight: 700;
   text-transform: uppercase;
   margin: 0 0 14px;
   padding-top: 20px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid color-mix(in srgb, var(--ink) 6%, transparent);
 }
 
 .pairing-steps {
@@ -164,20 +164,20 @@
 .pairing-steps li::before {
   content: counter(pairing-step) '.';
   font-family: var(--font-mono);
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 700;
   color: var(--text-dim);
   text-align: right;
 }
 
 .pairing-step__main {
-  font-size: 14px;
+  font-size: var(--fs-md);
   color: var(--text);
   line-height: 1.55;
 }
 
 .pairing-step__sub {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   color: var(--text-muted);
   margin-top: 4px;
   line-height: 1.5;
@@ -196,11 +196,11 @@
   opacity: 0.6;
 }
 
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .pairing-card {
     padding: 24px;
   }
   .pairing-title {
-    font-size: 22px;
+    font-size: var(--fs-xl);
   }
 }

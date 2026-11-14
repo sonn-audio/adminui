@@ -23,7 +23,7 @@
 }
 
 .search-input__icon {
-  color: var(--color-faint);
+  color: var(--text-dim);
   width: 22px;
   height: 22px;
   display: inline-flex;
@@ -60,22 +60,22 @@
 .search-input__clear {
   border: none;
   background: transparent;
-  color: var(--color-faint);
-  font-size: 1.35rem;
+  color: var(--text-dim);
+  font-size: var(--fs-xl);
   cursor: pointer;
   line-height: 1;
   padding: 0;
   width: 32px;
   height: 32px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   display: inline-flex;
   align-items: center;
   justify-content: center;
 }
 
 .search-input__clear:hover:not(:disabled) {
-  background: var(--color-highlight);
-  color: var(--color-text);
+  background: var(--accent-soft);
+  color: var(--text);
 }
 
 .search-input__clear:disabled {

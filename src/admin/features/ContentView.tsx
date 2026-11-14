@@ -2376,7 +2376,11 @@ export default function ContentView(): JSX.Element {
   // secret entered here (sent with the start, so they need not be saved first). The sign-in
   // finishes elsewhere, so this page learns the outcome by polling. The tokens stay server-side;
   // this keeps only the login id.
-  const [tidalEnvClient, setTidalEnvClient] = React.useState<boolean | null>(null);
+  // Where the server's client comes from: its environment (which overrides anything entered here),
+  // built into its image (which a client entered here replaces), or nowhere. Undefined until asked.
+  const [tidalServerClient, setTidalServerClient] = React.useState<'env' | 'bundled' | null | undefined>(undefined);
+  // With a built-in client the client fields are optional, so they stay folded away until asked for.
+  const [tidalOwnClientOpen, setTidalOwnClientOpen] = React.useState(false);
   const [tidalPending, setTidalPending] = React.useState<{
     loginId: string;
     userCode: string;
@@ -2387,12 +2391,18 @@ export default function ContentView(): JSX.Element {
   const [tidalCodeCopied, setTidalCodeCopied] = React.useState(false);
 
   React.useEffect(() => {
-    if (!bridgeModalOpen || bridgeForm.provider !== 'tidal' || tidalEnvClient !== null) return;
+    if (!bridgeModalOpen || bridgeForm.provider !== 'tidal' || tidalServerClient !== undefined) return;
     fetchTidalClientStatus()
-      .then((info) => setTidalEnvClient(info.envConfigured))
-      // Unknown: ask for a client, which is what the server needs when its environment has none.
-      .catch(() => setTidalEnvClient(false));
-  }, [bridgeModalOpen, bridgeForm.provider, tidalEnvClient]);
+      .then((info) => setTidalServerClient(info.source !== undefined ? (info.source ?? null) : info.envConfigured ? 'env' : null))
+      // Unknown: ask for a client, which is what the server needs when it provides none.
+      .catch(() => setTidalServerClient(null));
+  }, [bridgeModalOpen, bridgeForm.provider, tidalServerClient]);
+
+  // A service that already names its own client shows it, rather than hiding it behind the built-in one.
+  React.useEffect(() => {
+    if (bridgeModalOpen) setTidalOwnClientOpen(bridgeForm.tidalClientId.trim() !== '');
+    // Only on opening: typing in the fields must not fold them away again.
+  }, [bridgeModalOpen]);
 
   // A closed dialog abandons its sign-in; the server forgets it on its own.
   React.useEffect(() => {
@@ -2404,7 +2414,11 @@ export default function ContentView(): JSX.Element {
   }, [bridgeModalOpen]);
 
   const tidalClientReady =
-    tidalEnvClient === true || (bridgeForm.tidalClientId.trim() !== '' && bridgeForm.tidalClientSecret.trim() !== '');
+    tidalServerClient === 'env' ||
+    (tidalServerClient === 'bundled' && !tidalOwnClientOpen) ||
+    (bridgeForm.tidalClientId.trim() !== '' && bridgeForm.tidalClientSecret.trim() !== '');
+  const tidalShowClientFields =
+    tidalServerClient !== 'env' && (tidalServerClient !== 'bundled' || tidalOwnClientOpen);
   // A stored session, or a token pasted by hand before sign-in existed: either way the account is
   // linked, and signing out is how it gets replaced.
   const tidalSignedIn = bridgeForm.tidalAccount !== null || bridgeForm.tidalAccessToken.trim() !== '';
@@ -5129,11 +5143,35 @@ export default function ContentView(): JSX.Element {
                 <div className="bridge-modal__panel-title">{t('content.bridge.tidal.title')}</div>
                 <p className="bridge-modal__panel-desc">{t('content.bridge.tidal.descLong')}</p>
                 <div className="bridge-modal__stack">
-                  {tidalEnvClient ? (
+                  {tidalServerClient === 'env' ? (
                     <p className="bridge-modal__help">{t('content.bridge.tidal.envClient')}</p>
+                  ) : tidalServerClient === 'bundled' && !tidalShowClientFields ? (
+                    <p className="bridge-modal__help">
+                      {t('content.bridge.tidal.bundledClient')}{' '}
+                      <button type="button" className="bridge-modal__inline-link" onClick={() => setTidalOwnClientOpen(true)}>
+                        {t('content.bridge.tidal.useOwnClient')}
+                      </button>
+                    </p>
                   ) : (
                     <>
-                      <p className="bridge-modal__help">{t('content.bridge.tidal.clientIntro')}</p>
+                      <p className="bridge-modal__help">
+                        {tidalServerClient === 'bundled' ? t('content.bridge.tidal.ownClientIntro') : t('content.bridge.tidal.clientIntro')}
+                        {tidalServerClient === 'bundled' ? (
+                          <>
+                            {' '}
+                            <button
+                              type="button"
+                              className="bridge-modal__inline-link"
+                              onClick={() => {
+                                updateBridgeForm({ tidalClientId: '', tidalClientSecret: '' });
+                                setTidalOwnClientOpen(false);
+                              }}
+                            >
+                              {t('content.bridge.tidal.useBuiltInClient')}
+                            </button>
+                          </>
+                        ) : null}
+                      </p>
                       <div className="bridge-modal__field">
                         <label className="bridge-modal__label" htmlFor="bridge-tidal-client-id">{t('content.bridge.tidal.clientIdLabel')}</label>
                         <input

@@ -6,10 +6,10 @@
   align-items: flex-start;
   gap: 0.9rem;
   padding: 0.95rem 1.05rem;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: rgba(15, 20, 27, 0.74);
-  box-shadow: inset 0 1px rgba(233, 238, 246, 0.08);
+  box-shadow: inset 0 1px color-mix(in srgb, var(--ink) 8%, transparent);
 }
 
 @supports ((-webkit-backdrop-filter: blur(6px)) or (backdrop-filter: blur(6px))) {
@@ -29,13 +29,13 @@
   width: 40px;
   height: 40px;
   flex: 0 0 auto;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--border);
-  background: var(--color-highlight);
-  color: var(--color-muted);
+  background: var(--accent-soft);
+  color: var(--text-muted);
 }
 
 .inline-state--compact .inline-state__icon {
@@ -45,8 +45,8 @@
 }
 
 .inline-state--error .inline-state__icon {
-  background: rgba(220, 38, 38, 0.10);
-  border-color: rgba(220, 38, 38, 0.25);
+  background: color-mix(in srgb, var(--danger-deep) 10%, transparent);
+  border-color: color-mix(in srgb, var(--danger-deep) 25%, transparent);
   color: rgba(185, 28, 28, 0.95);
 }
 
@@ -66,16 +66,16 @@
 
 .inline-state__title {
   margin: 0;
-  font-size: 0.98rem;
+  font-size: var(--fs-lg);
   font-weight: 750;
-  color: var(--color-text);
+  color: var(--text);
   line-height: 1.25;
 }
 
 .inline-state__message {
   margin: 0;
-  font-size: 0.9rem;
-  color: var(--color-subtle);
+  font-size: var(--fs-md);
+  color: var(--text-subtle);
   line-height: 1.45;
 }
 
@@ -89,9 +89,9 @@
 .inline-state__spinner {
   width: 18px;
   height: 18px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 2px solid var(--border);
-  border-top-color: var(--color-muted);
+  border-top-color: var(--text-muted);
   animation: inline-state-spin 900ms linear infinite;
 }
 

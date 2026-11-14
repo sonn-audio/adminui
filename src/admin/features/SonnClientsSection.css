@@ -22,13 +22,13 @@
   flex-wrap: wrap;
   padding: 14px 18px;
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.015);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--ink) 1.5%, transparent);
 }
 
 .sonn-fleet--update {
   border-color: var(--border-accent);
-  background: rgba(74, 222, 128, 0.04);
+  background: color-mix(in srgb, var(--accent) 4%, transparent);
 }
 
 /* A basis rather than `flex: 1`: the actions wrap internally, so their min-content width is one
@@ -42,13 +42,13 @@
 }
 
 .sonn-fleet__title {
-  font-size: 14px;
+  font-size: var(--fs-md);
   font-weight: 600;
   color: var(--text);
 }
 
 .sonn-fleet__desc {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   line-height: 1.45;
 }
@@ -71,7 +71,7 @@
   gap: 14px;
 }
 
-@media (max-width: 780px) {
+@media (max-width: 900px) {
   .sonn-grid {
     grid-template-columns: 1fr;
   }
@@ -80,7 +80,7 @@
 .sonn-tile {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   padding: 16px;
   display: flex;
   flex-direction: column;
@@ -92,13 +92,13 @@
 .sonn-tile:hover {
   border-color: var(--border-strong);
   transform: translateY(-1px);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--shade) 25%, transparent);
 }
 
 /* A device we have not heard from, or one reporting a problem. Not a device someone switched off:
    that is a choice, and colouring it like a fault is how a screen cries wolf. */
 .sonn-tile.is-idle {
-  border-color: rgba(245, 158, 11, 0.22);
+  border-color: color-mix(in srgb, var(--warn) 22%, transparent);
 }
 
 .sonn-tile__head {
@@ -113,7 +113,7 @@
 }
 
 .sonn-tile__name {
-  font-size: 15px;
+  font-size: var(--fs-md);
   font-weight: 700;
   letter-spacing: -0.2px;
   color: var(--text);
@@ -125,7 +125,7 @@
 .sonn-tile__meta {
   margin-top: 4px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 0.4px;
   color: var(--text-dim);
   white-space: nowrap;
@@ -151,21 +151,21 @@
 .sonn-tile__ver {
   flex: none;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1px;
   font-weight: 700;
   text-transform: uppercase;
   color: var(--text-dim);
   padding: 4px 8px;
   border: 1px solid var(--border);
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-pill);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
 }
 
 .sonn-tile__ver.is-behind {
   color: var(--accent);
   border-color: var(--border-accent);
-  background: rgba(74, 222, 128, 0.07);
+  background: color-mix(in srgb, var(--accent) 7%, transparent);
 }
 
 /* ---- What the device is doing, right now ---- */
@@ -181,14 +181,14 @@
   gap: 11px;
   padding: 12px 13px;
   border: 1px solid var(--border);
-  border-radius: 11px;
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
   transition: border-color 0.15s, background 0.15s;
 }
 
 .sonn-hero:hover {
   border-color: var(--border-accent);
-  background: rgba(255, 255, 255, 0.035);
+  background: color-mix(in srgb, var(--ink) 3.5%, transparent);
 }
 
 .sonn-hero__icon {
@@ -197,7 +197,7 @@
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: 9px;
+  border-radius: var(--radius-sm);
   background: var(--surface);
   border: 1px solid var(--border);
   color: var(--text-muted);
@@ -206,18 +206,18 @@
 .sonn-hero.is-playing .sonn-hero__icon {
   color: var(--accent);
   border-color: var(--border-accent);
-  background: rgba(74, 222, 128, 0.08);
+  background: color-mix(in srgb, var(--accent) 8%, transparent);
 }
 
 .sonn-hero.is-quiet {
-  background: rgba(245, 158, 11, 0.04);
-  border-color: rgba(245, 158, 11, 0.24);
+  background: color-mix(in srgb, var(--warn) 4%, transparent);
+  border-color: color-mix(in srgb, var(--warn) 24%, transparent);
 }
 
 .sonn-hero.is-quiet .sonn-hero__icon {
   color: var(--warn-bright);
-  border-color: rgba(245, 158, 11, 0.28);
-  background: rgba(245, 158, 11, 0.08);
+  border-color: color-mix(in srgb, var(--warn) 28%, transparent);
+  background: color-mix(in srgb, var(--warn) 8%, transparent);
 }
 
 .sonn-hero__text {
@@ -228,7 +228,7 @@
 }
 
 .sonn-hero__state {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
@@ -243,7 +243,7 @@
 .sonn-hero__detail {
   margin-top: 3px;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.1px;
   text-transform: uppercase;
   font-weight: 700;
@@ -269,7 +269,7 @@
 
 .sonn-tile__label {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.6px;
   text-transform: uppercase;
   font-weight: 700;
@@ -305,7 +305,7 @@
 }
 
 .sonn-tile__row-name {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--text);
   white-space: nowrap;
@@ -317,7 +317,7 @@
    the accent the way a drill row's summary does everywhere else. */
 .sonn-tile__row-sum {
   margin-top: 2px;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--accent);
   white-space: nowrap;
@@ -333,14 +333,14 @@
 .sonn-tile__add {
   align-self: flex-start;
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.4px;
   text-transform: uppercase;
   font-weight: 700;
   color: var(--text-dim);
   background: none;
   border: 1px dashed var(--border-strong);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   padding: 6px 10px;
   cursor: pointer;
   min-height: 0;
@@ -367,18 +367,18 @@
 
 .sonn-chip {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1px;
   text-transform: uppercase;
   font-weight: 700;
   padding: 5px 9px;
-  border-radius: 7px;
+  border-radius: var(--radius-sm);
   display: inline-flex;
   align-items: center;
   gap: 6px;
   border: 1px solid var(--border);
   color: var(--text-dim);
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -405,8 +405,8 @@
 
 .sonn-chip.is-warn {
   color: var(--warn-bright);
-  border-color: rgba(245, 158, 11, 0.3);
-  background: rgba(245, 158, 11, 0.06);
+  border-color: color-mix(in srgb, var(--warn) 30%, transparent);
+  background: color-mix(in srgb, var(--warn) 6%, transparent);
 }
 
 .sonn-chip.is-warn .sonn-chip__dot {
@@ -428,7 +428,7 @@
   justify-content: center;
   gap: 8px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.4px;
   text-transform: uppercase;
   font-weight: 700;
@@ -443,12 +443,12 @@
 
 .sonn-tile__action:hover {
   color: var(--text);
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
 }
 
 .sonn-tile__action--danger:hover {
   color: var(--danger);
-  background: rgba(239, 68, 68, 0.05);
+  background: color-mix(in srgb, var(--danger) 5%, transparent);
 }
 
 .sonn-tile__action + .sonn-tile__action {
@@ -460,11 +460,11 @@
 .sonn-add {
   align-self: start;
   border: 1px dashed var(--border-strong);
-  border-radius: 14px;
+  border-radius: var(--radius-md);
   background: none;
   color: var(--text-dim);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   letter-spacing: 1.6px;
   text-transform: uppercase;
   font-weight: 700;
@@ -482,7 +482,7 @@
 .sonn-add:hover {
   color: var(--accent);
   border-color: var(--border-accent);
-  background: rgba(74, 222, 128, 0.03);
+  background: color-mix(in srgb, var(--accent) 3%, transparent);
 }
 
 .sonn-add__icon {
@@ -493,7 +493,7 @@
   display: grid;
   place-items: center;
   font-family: var(--font-sans);
-  font-size: 16px;
+  font-size: var(--fs-lg);
   font-weight: 400;
   line-height: 1;
 }
@@ -504,12 +504,12 @@
   padding: 44px 24px;
   text-align: center;
   border: 1px solid var(--border-soft);
-  border-radius: 16px;
-  background: rgba(255, 255, 255, 0.015);
+  border-radius: var(--radius-lg);
+  background: color-mix(in srgb, var(--ink) 1.5%, transparent);
 }
 
 .sonn-empty__title {
-  font-size: 18px;
+  font-size: var(--fs-xl);
   font-weight: 700;
   color: var(--text);
 }
@@ -517,7 +517,7 @@
 .sonn-empty__body {
   margin: 8px auto 0;
   max-width: 56ch;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   line-height: 1.6;
   color: var(--text-muted);
 }
@@ -535,10 +535,10 @@
   display: block;
   padding: 11px 13px;
   border: 1px solid var(--border-soft);
-  border-radius: 9px;
-  background: rgba(0, 0, 0, 0.28);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--shade) 28%, transparent);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   line-height: 1.6;
   color: var(--text-muted);
   overflow-wrap: anywhere;
@@ -578,8 +578,8 @@
   max-height: calc(100vh - 48px);
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 16px;
-  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.6), 0 0 0 1px var(--accent-soft);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 24px 64px color-mix(in srgb, var(--shade) 60%, transparent), 0 0 0 1px var(--accent-soft);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -635,7 +635,7 @@
   display: grid;
   place-items: center;
   padding: 0;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: none;
   color: var(--text-muted);
@@ -655,7 +655,7 @@
   gap: 8px;
   margin: 0 0 6px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 2.2px;
   text-transform: uppercase;
   font-weight: 700;
@@ -664,7 +664,7 @@
 
 .sonn-modal__title {
   margin: 0;
-  font-size: 21px;
+  font-size: var(--fs-xl);
   font-weight: 700;
   letter-spacing: -0.4px;
   line-height: 1.15;
@@ -674,7 +674,7 @@
 .sonn-modal__subtitle {
   margin-top: 7px;
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.3px;
   text-transform: uppercase;
   font-weight: 700;
@@ -693,7 +693,7 @@
   flex: none;
   padding: 6px;
   border: none;
-  border-radius: 6px;
+  border-radius: var(--radius-sm);
   background: none;
   color: var(--text-dim);
   cursor: pointer;
@@ -723,17 +723,17 @@
   gap: 10px;
   padding: 16px 24px;
   border-top: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.015);
+  background: color-mix(in srgb, var(--ink) 1.5%, transparent);
 }
 
 .sonn-modal__btn {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   letter-spacing: 1.8px;
   text-transform: uppercase;
   font-weight: 700;
   padding: 10px 18px;
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text-muted);
@@ -768,21 +768,21 @@
 .sonn-modal__btn--danger {
   margin-right: auto;
   color: var(--danger);
-  border-color: rgba(239, 68, 68, 0.3);
-  background: rgba(239, 68, 68, 0.04);
+  border-color: color-mix(in srgb, var(--danger) 30%, transparent);
+  background: color-mix(in srgb, var(--danger) 4%, transparent);
 }
 
 .sonn-modal__btn--danger:not(:disabled):hover {
   color: var(--danger-bright);
-  border-color: rgba(239, 68, 68, 0.5);
+  border-color: color-mix(in srgb, var(--danger) 50%, transparent);
 }
 
 /* ---- Groups and rows inside the dialog ---- */
 
 .sonn-group {
   border: 1px solid var(--border);
-  border-radius: 14px;
-  background: rgba(255, 255, 255, 0.02);
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
   padding: 6px 14px;
 }
 
@@ -796,7 +796,7 @@
 
 .sonn-group__label {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.4px;
   text-transform: uppercase;
   font-weight: 700;
@@ -805,7 +805,7 @@
 
 .sonn-group__empty {
   padding: 4px 2px 12px;
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   line-height: 1.5;
 }
@@ -848,8 +848,8 @@
   flex: none;
   display: grid;
   place-items: center;
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.04);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--ink) 4%, transparent);
   border: 1px solid var(--border);
   color: var(--text-muted);
 }
@@ -863,19 +863,19 @@
 }
 
 .sonn-row__title {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   font-weight: 600;
   color: var(--text);
 }
 
 .sonn-row__desc {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   line-height: 1.4;
   color: var(--text-dim);
 }
 
 .sonn-row__sum {
-  font-size: 11px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--accent);
 }
@@ -900,7 +900,7 @@
 .sonn-note {
   margin: 0;
   padding: 2px 2px 12px;
-  font-size: 11px;
+  font-size: var(--fs-xs);
   line-height: 1.5;
   color: var(--text-dim);
 }
@@ -917,11 +917,11 @@
   max-width: 320px;
   padding: 9px 32px 9px 12px;
   border: 1px solid var(--border);
-  border-radius: 8px;
+  border-radius: var(--radius-sm);
   background-color: var(--surface);
   color: var(--text);
   font-family: inherit;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   outline: none;
   min-height: 0;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%236B7280' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>");
@@ -954,7 +954,7 @@
 /* On a phone a row cannot be label-left / control-right: the label ends up one word per line and a
    dropdown wider than the dialog. The control drops to its own line instead — except a toggle, which
    is narrow enough to stay where it is. */
-@media (max-width: 620px) {
+@media (max-width: 640px) {
   .sonn-modal-backdrop {
     padding: 12px;
   }
@@ -1018,7 +1018,7 @@
 /* A value the device told us and nobody can type over — an id, an address, a build. */
 .sonn-mono {
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   color: var(--text-muted);
   overflow-wrap: anywhere;
 }
@@ -1036,9 +1036,9 @@
   grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   margin: 4px 0 10px;
   border: 1px solid var(--border-faint);
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   overflow: hidden;
-  background: rgba(255, 255, 255, 0.02);
+  background: color-mix(in srgb, var(--ink) 2%, transparent);
 }
 
 .sonn-facts__item {
@@ -1064,7 +1064,7 @@
 
 .sonn-facts__label {
   font-family: var(--font-mono);
-  font-size: 9px;
+  font-size: var(--fs-2xs);
   letter-spacing: 1.3px;
   text-transform: uppercase;
   font-weight: 700;
@@ -1072,7 +1072,7 @@
 }
 
 .sonn-facts__value {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text);
   overflow-wrap: anywhere;
 }
@@ -1085,10 +1085,10 @@
   max-height: 320px;
   overflow: auto;
   border: 1px solid var(--border-soft);
-  border-radius: 9px;
-  background: rgba(0, 0, 0, 0.28);
+  border-radius: var(--radius-sm);
+  background: color-mix(in srgb, var(--shade) 28%, transparent);
   font-family: var(--font-mono);
-  font-size: 11px;
+  font-size: var(--fs-xs);
   line-height: 1.6;
   color: var(--text-muted);
   /* Wrapped rather than scrolled sideways: a log line here is long and the panel is not wide, and
@@ -1098,5 +1098,5 @@
 }
 
 .sonn-note--warn {
-  color: var(--warn, #e0a458);
+  color: var(--warn);
 }

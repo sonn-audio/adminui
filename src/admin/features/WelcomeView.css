@@ -26,7 +26,7 @@
 
 .welcome-eyebrow {
   font-family: var(--font-mono);
-  font-size: 10px;
+  font-size: var(--fs-2xs);
   letter-spacing: 3px;
   text-transform: uppercase;
   font-weight: 700;
@@ -37,7 +37,7 @@
 }
 
 .welcome-title {
-  font-size: 24px;
+  font-size: var(--fs-2xl);
   font-weight: 700;
   color: var(--text);
   margin: 0 0 10px;
@@ -46,7 +46,7 @@
 }
 
 .welcome-intro {
-  font-size: 15px;
+  font-size: var(--fs-md);
   color: var(--text-muted);
   max-width: 460px;
   line-height: 1.5;
@@ -65,12 +65,12 @@
   align-items: center;
   gap: 8px;
   padding: 12px 22px;
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   border: 1px solid var(--accent);
   background: var(--accent);
-  color: #04120a;
+  color: var(--accent-on);
   font: inherit;
-  font-size: 15px;
+  font-size: var(--fs-md);
   font-weight: 600;
   cursor: pointer;
   animation: welcome-fade-up 0.6s var(--spring) both;
@@ -105,19 +105,19 @@
   text-align: left;
 }
 .welcome-field__label {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   font-weight: 600;
   color: var(--text-muted);
 }
 .welcome-input {
   width: 100%;
   padding: 11px 13px;
-  border-radius: 10px;
+  border-radius: var(--radius-md);
   border: 1px solid var(--border);
   background: var(--surface);
   color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: var(--fs-md);
   transition: border-color 0.15s;
 }
 .welcome-input:focus {
@@ -129,8 +129,8 @@
 }
 .welcome-error {
   margin: 0;
-  font-size: 13px;
-  color: #f87171;
+  font-size: var(--fs-sm);
+  color: var(--danger);
   text-align: left;
 }
 .welcome-form .welcome-start {
@@ -170,7 +170,7 @@
   background: none;
   color: var(--text-muted);
   font: inherit;
-  font-size: 13px;
+  font-size: var(--fs-sm);
   cursor: pointer;
   transition: color 0.15s;
   animation: welcome-fade-up 0.6s var(--spring) both;
@@ -201,7 +201,7 @@
   color: inherit;
   padding: 28px 26px;
   border: 1px solid var(--border);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
   background: var(--bg-card);
   cursor: pointer;
   overflow: hidden;
@@ -239,7 +239,7 @@
 .welcome-choice:focus-visible {
   border-color: color-mix(in srgb, var(--accent) 50%, var(--border));
   transform: translateY(-2px);
-  box-shadow: 0 16px 40px -20px rgba(74, 222, 128, 0.5);
+  box-shadow: 0 16px 40px -20px color-mix(in srgb, var(--accent) 50%, transparent);
   outline: none;
 }
 
@@ -278,32 +278,32 @@
   place-items: center;
   width: 44px;
   height: 44px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   background: color-mix(in srgb, var(--accent) 12%, transparent);
   color: var(--accent);
 }
 
 .welcome-choice__name {
-  font-size: 16px;
+  font-size: var(--fs-lg);
   font-weight: 700;
   color: var(--text);
 }
 
 .welcome-choice__desc {
-  font-size: 13px;
+  font-size: var(--fs-sm);
   line-height: 1.45;
   color: var(--text-muted);
 }
 
 .welcome-foot {
-  font-size: 12px;
+  font-size: var(--fs-xs);
   color: var(--text-dim);
   margin: 26px 0 0;
   animation: welcome-fade-up 0.6s var(--spring) both;
   animation-delay: 0.6s;
 }
 
-@media (max-width: 560px) {
+@media (max-width: 640px) {
   .welcome-choices {
     grid-template-columns: 1fr;
   }
