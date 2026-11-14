@@ -1,6 +1,9 @@
 # Runs on every push and pull request, so drift is caught where it is written rather than at the
-# release: the types, the style audit (every size, corner, breakpoint and colour comes from
+# release: the style audit (every size, corner, breakpoint and colour comes from
 # `src/admin/styles/theme.css`, and no stylesheet names a token that does not exist), and the build.
+#
+# No typecheck: the types this console shares with the server are imported from the server's
+# source (), so  only passes in a checkout that sits inside the server's.
 name: Check
 
 on:
@@ -23,9 +26,6 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
-
-      - name: Typecheck
-        run: npm run typecheck
 
       - name: Check the styles against the theme
         run: npm run audit:ui:strict

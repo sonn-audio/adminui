@@ -53,9 +53,6 @@ jobs:
       - name: Check the styles against the theme
         run: npm run audit:ui:strict
 
-      - name: Typecheck
-        run: npm run typecheck
-
       - name: Build
         run: npm run build
 
