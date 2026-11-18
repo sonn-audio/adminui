@@ -2129,6 +2129,14 @@ function groupZones(
       existing.zones.push(zone);
     }
   });
+  // A device the Loxone project has but gave no zones yet — a just-added extension — is shown too,
+  // or it vanishes from this view the moment it stops being one we announced.
+  Object.values(sources).forEach((source) => {
+    const key = source.serial.toLowerCase();
+    if (!groups.has(key)) {
+      groups.set(key, { key, label: source.label, sourceSerial: source.serial, zones: [] });
+    }
+  });
   return Array.from(groups.values()).sort((a, b) => a.label.localeCompare(b.label));
 }
 
