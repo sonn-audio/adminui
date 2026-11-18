@@ -4,7 +4,7 @@
   "version": "6.5.1",
   "type": "module",
   "sonn": {
-    "minCore": "4.0.0-beta.22"
+    "minCore": "4.0.0-beta.25"
   },
   "scripts": {
     "dev": "vite",

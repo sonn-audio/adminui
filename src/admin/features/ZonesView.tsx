@@ -3,7 +3,13 @@ import { createPortal } from 'react-dom';
 import { useTranslation, Trans } from 'react-i18next';
 import './ZonesView.css';
 import { fetchSoloistStatus } from '../services/contentApi';
-import { getConfig, updateGroupsConfig, updateManagedPlayers, setLoxoneConnection } from '../services/setupApi';
+import {
+  getConfig,
+  updateAnnouncedExtensions,
+  updateGroupsConfig,
+  updateManagedPlayers,
+  setLoxoneConnection,
+} from '../services/setupApi';
 import {
   createZone,
   deleteZone,
@@ -103,6 +109,8 @@ type AudioServerConfig = {
   loxoneEnabled?: boolean;
   managedPlayers?: boolean;
   extensions?: AudioServerExtension[];
+  /** Serials of extensions added here that the Loxone project does not have yet. */
+  announcedExtensions?: string[];
 };
 
 interface ConfigResponse {
@@ -205,7 +213,9 @@ export default function ZonesView(): JSX.Element {
   const [addingZone, setAddingZone] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [extensionPlaceholders, setExtensionPlaceholders] = React.useState<ExtensionPlaceholder[]>([]);
+  // Extensions added here and not yet in the Loxone project. Kept on the server, which offers
+  // them to Loxone Config's search, so they survive a reload and need no serial typed over.
+  const [announcedSerials, setAnnouncedSerials] = React.useState<string[]>([]);
   const [saving, setSaving] = React.useState(false);
   const [activeZoneModal, setActiveZoneModal] = React.useState<{
     zoneId: number;
@@ -258,6 +268,14 @@ export default function ZonesView(): JSX.Element {
       const hasAccounts = spotifyAccounts.length > 0;
       setHasSpotifyAccounts(hasAccounts);
       setBaseSerial(base);
+      const learnedSerials = new Set(
+        (data.config?.system?.audioserver?.extensions ?? []).map((ext) => (ext.mac ?? '').toUpperCase()),
+      );
+      setAnnouncedSerials(
+        (data.config?.system?.audioserver?.announcedExtensions ?? [])
+          .map((serial) => serial.toUpperCase())
+          .filter((serial) => !learnedSerials.has(serial)),
+      );
       setPowerGroups(Array.isArray(data.config?.groups?.powerGroups) ? data.config?.groups?.powerGroups : []);
       setTransportDefinitions(definitions);
       setZoneStateMap(states?.map ?? {});
@@ -441,6 +459,16 @@ export default function ZonesView(): JSX.Element {
     };
   }, []);
 
+  const extensionPlaceholders = React.useMemo<ExtensionPlaceholder[]>(() => {
+    const base = parseInt(baseSerial, 16);
+    if (!Number.isFinite(base)) return [];
+    return announcedSerials
+      .map((serial) => ({ serial, index: parseInt(serial, 16) - base }))
+      .filter((entry) => entry.index > 0)
+      .sort((a, b) => a.index - b.index)
+      .map((entry) => ({ ...entry, label: t('zones.extensionDefaultName', { index: entry.index }) }));
+  }, [announcedSerials, baseSerial, t]);
+
   const displayGroups = React.useMemo(() => {
     const placeholders: ZoneGroup[] = extensionPlaceholders.map((ph) => ({
       key: `placeholder-${ph.index}`,
@@ -498,10 +526,11 @@ export default function ZonesView(): JSX.Element {
 
   const extensionCount = React.useMemo(() => {
     const configured = zoneGroups.reduce((count, group) => {
-      return extractExtensionIndex(group.label) ? count + 1 : count;
+      return (extensionIndexOf(group.sourceSerial) ?? extractExtensionIndex(group.label)) ? count + 1 : count;
     }, 0);
     return configured + extensionPlaceholders.length;
-  }, [zoneGroups, extensionPlaceholders]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- extensionIndexOf only reads baseSerial
+  }, [zoneGroups, extensionPlaceholders, baseSerial]);
 
   // Extensions are a Loxone-compatibility concept (4 zones per device); standalone has no extensions.
   const canAddExtension = !standalone && Boolean(baseSerial) && extensionCount < MAX_EXTENSION_COUNT;
@@ -512,6 +541,13 @@ export default function ZonesView(): JSX.Element {
     if (!match) return null;
     const parsed = Number(match[1]);
     return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  /** An extension's place after the server, read from its serial; null for the server itself. */
+  function extensionIndexOf(serial: string | undefined): number | null {
+    if (!serial || !baseSerial) return null;
+    const index = parseInt(serial.replace(/[^0-9A-Fa-f]/g, ''), 16) - parseInt(baseSerial, 16);
+    return Number.isFinite(index) && index > 0 && index <= MAX_EXTENSION_COUNT ? index : null;
   }
 
   function computeExtensionSerial(base: string, index: number): string {
@@ -529,7 +565,7 @@ export default function ZonesView(): JSX.Element {
   }
 
 
-  function handleAddExtension(): void {
+  async function handleAddExtension(): Promise<void> {
     if (!canAddExtension) {
       if (!baseSerial) return;
       pushAlert({
@@ -541,7 +577,8 @@ export default function ZonesView(): JSX.Element {
     }
     const indexes = new Set<number>();
     zoneGroups.forEach((g) => {
-      const idx = extractExtensionIndex(g.label);
+      // By serial first: Loxone names a found extension "Stereo Extension", without a number.
+      const idx = extensionIndexOf(g.sourceSerial) ?? extractExtensionIndex(g.label);
       if (idx && idx > 0) indexes.add(idx);
     });
     extensionPlaceholders.forEach((ph) => {
@@ -561,10 +598,13 @@ export default function ZonesView(): JSX.Element {
     }
     const next = highest + 1;
     const serial = computeExtensionSerial(baseSerial, next);
-    setExtensionPlaceholders((prev) => [
-      ...prev,
-      { index: next, serial, label: t('zones.extensionDefaultName', { index: next }) },
-    ]);
+    const announced = [...announcedSerials, serial];
+    try {
+      await updateAnnouncedExtensions(announced);
+      setAnnouncedSerials(announced);
+    } catch (err) {
+      pushAlert({ tone: 'error', title: t('zones.addExtension'), message: String(err) });
+    }
   }
 
   const definitionMap = React.useMemo(() => {
@@ -1328,7 +1368,7 @@ export default function ZonesView(): JSX.Element {
             <button
               type="button"
               className="zones-add-extension"
-              onClick={handleAddExtension}
+              onClick={() => void handleAddExtension()}
               disabled={!canAddExtension || saving}
             >
               <span className="zones-add-extension__icon">+</span>

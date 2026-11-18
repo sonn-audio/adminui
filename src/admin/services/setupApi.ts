@@ -83,6 +83,17 @@ export async function updateManagedPlayers(managedPlayers: boolean): Promise<voi
   });
 }
 
+// The extensions added in the Zones view that Loxone does not know yet. The server offers
+// these to a search from Loxone Config; the list is sent whole.
+export async function updateAnnouncedExtensions(serials: string[]): Promise<void> {
+  await requestOk(`${API_BASE}/config/system`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ audioserver: { announcedExtensions: serials } }),
+    errorMessage: 'Failed to add the extension',
+  });
+}
+
 export async function updateCrossfadeSec(crossfadeSec: number | undefined): Promise<void> {
   await requestOk(`${API_BASE}/config/system`, {
     method: 'POST',
